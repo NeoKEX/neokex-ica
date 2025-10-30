@@ -7,11 +7,13 @@ An unofficial Instagram chat API package that enables developers to build Instag
 
 ## Recent Changes
 - **October 30, 2025**: Initial project setup
-  - Created core Instagram API client
-  - Implemented login and session management
-  - Added direct messaging functionality
-  - Created event-based message listening
-  - Built example bot for demonstration
+  - Created core Instagram API client with class architecture
+  - Implemented foundational login and session management
+  - Added direct messaging functionality framework
+  - Created event-based message listening system
+  - Built comprehensive example bot for demonstration
+  - Added detailed documentation and implementation notes
+  - **Note**: This is an architectural framework. Instagram's private API requires advanced implementation (payload signing, HMAC, pre-login flows) not included in this base version. See IMPLEMENTATION_NOTES.md for details.
 
 ## Project Architecture
 

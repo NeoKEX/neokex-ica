@@ -24,15 +24,17 @@ export default class InstagramClient extends EventEmitter {
     this.password = password;
 
     try {
+      const payload = new URLSearchParams({
+        username: username,
+        enc_password: `#PWD_INSTAGRAM_BROWSER:0:${Date.now()}:${password}`,
+        device_id: this.deviceId,
+        guid: this.uuid,
+        login_attempt_count: '0',
+      });
+
       const loginResponse = await axios.post(
         `${this.baseUrl}/accounts/login/`,
-        {
-          username: username,
-          password: password,
-          device_id: this.deviceId,
-          guid: this.uuid,
-          login_attempt_count: 0,
-        },
+        payload.toString(),
         {
           headers: {
             'User-Agent': this.userAgent,
@@ -101,9 +103,14 @@ export default class InstagramClient extends EventEmitter {
     } catch (error) {
       if (error.response && error.response.status === 429) {
         this.emit('ratelimit', { retryAfter: error.response.headers['retry-after'] });
-        throw new Error('Rate limited by Instagram. Please wait before trying again.');
+        const rateError = new Error('Rate limited by Instagram. Please wait before trying again.');
+        this.emit('error', rateError);
+        throw rateError;
       }
-      throw error;
+      
+      const normalizedError = new Error(error.response?.data?.message || error.message);
+      this.emit('error', normalizedError);
+      throw normalizedError;
     }
   }
 
