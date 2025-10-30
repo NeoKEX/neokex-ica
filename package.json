@@ -1,6 +1,6 @@
 {
   "name": "neokex-ica",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Professional Instagram Chat API library for Node.js - 44 methods for messaging, threads, and user management. Pure API library for developers building Instagram automation tools.",
   "main": "src/index.js",
   "type": "module",
