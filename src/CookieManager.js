@@ -6,12 +6,18 @@ export default class CookieManager {
     const lines = fileContent.split('\n');
     
     for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine || trimmedLine.startsWith('#')) {
+      let trimmedLine = line.trim();
+      if (!trimmedLine) {
         continue;
       }
       
-      const parts = trimmedLine.split('\t');
+      if (trimmedLine.startsWith('#HttpOnly_')) {
+        trimmedLine = trimmedLine.substring(10);
+      } else if (trimmedLine.startsWith('#')) {
+        continue;
+      }
+      
+      const parts = trimmedLine.split(/\s+/);
       if (parts.length >= 7) {
         const name = parts[5].trim();
         const value = parts[6].trim();

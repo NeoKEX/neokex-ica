@@ -283,7 +283,15 @@ export default class InstagramClient extends EventEmitter {
         const errorType = response.data?.error_type || 'unknown';
         const statusType = response.data?.status || 'unknown';
         const errorMsg = response.data?.message || `Request failed with status ${response.status}`;
+        
+        if (response.data?.challenge) {
+          const challengeUrl = response.data.challenge?.api_path || response.data.challenge?.url || 'unknown';
+          logger.error('Challenge required', { errorType, challengeUrl });
+          throw new Error(`Challenge required (${errorType}). Instagram needs verification. Path: ${challengeUrl}. Please login through Instagram app to verify your account.`);
+        }
+        
         logger.error('API request failed', { errorType, statusType, message: errorMsg });
+        logger.debug('Full response data', response.data);
         throw new Error(`Request failed (${errorType}, status: ${statusType}): ${errorMsg}`);
       }
 

@@ -10,7 +10,12 @@ export default class DirectMessage {
   }
 
   async getInbox() {
-    const data = await this.client.request('/direct_v2/inbox/');
+    const params = new URLSearchParams({
+      persistentBadging: 'true',
+      folder: '',
+      limit: '20'
+    });
+    const data = await this.client.request(`/direct_v2/inbox/?${params.toString()}`);
     this.inbox = data.inbox;
     return data.inbox;
   }
