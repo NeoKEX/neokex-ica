@@ -1,5 +1,5 @@
 {
-  "name": "instagram-chat-api",
+  "name": "neokex-ica",
   "version": "1.0.0",
   "description": "Unofficial Instagram chat API for building bots",
   "main": "src/index.js",
