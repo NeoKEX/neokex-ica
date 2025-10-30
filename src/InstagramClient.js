@@ -1,6 +1,7 @@
 import axios from 'axios';
 import EventEmitter from 'eventemitter3';
 import { generateDeviceId, generateUUID, sleep } from './utils.js';
+import CookieManager from './CookieManager.js';
 
 export default class InstagramClient extends EventEmitter {
   constructor() {
@@ -102,10 +103,9 @@ export default class InstagramClient extends EventEmitter {
       return response.data;
     } catch (error) {
       if (error.response && error.response.status === 429) {
-        this.emit('ratelimit', { retryAfter: error.response.headers['retry-after'] });
-        const rateError = new Error('Rate limited by Instagram. Please wait before trying again.');
-        this.emit('error', rateError);
-        throw rateError;
+        this.emit('ratelimit', { 
+          retryAfter: error.response.headers['retry-after'] || 'unknown' 
+        });
       }
       
       const normalizedError = new Error(error.response?.data?.message || error.message);
@@ -127,5 +127,47 @@ export default class InstagramClient extends EventEmitter {
   async getUserByUsername(username) {
     const data = await this.request(`/users/${username}/usernameinfo/`);
     return data.user;
+  }
+
+  loadCookiesFromFile(filePath) {
+    this.cookies = CookieManager.loadFromFile(filePath);
+    
+    if (this.cookies.csrftoken) {
+      this.token = this.cookies.csrftoken;
+    }
+    
+    if (this.cookies.ds_user_id) {
+      this.userId = this.cookies.ds_user_id;
+      this.rankToken = `${this.userId}_${this.uuid}`;
+    }
+    
+    this.isLoggedIn = true;
+    this.emit('cookies:loaded', { cookieFile: filePath });
+    
+    return this.cookies;
+  }
+
+  saveCookiesToFile(filePath, domain = '.instagram.com') {
+    CookieManager.saveToFile(filePath, this.cookies, domain);
+    this.emit('cookies:saved', { cookieFile: filePath });
+  }
+
+  setCookies(cookies) {
+    this.cookies = { ...this.cookies, ...cookies };
+    
+    if (cookies.csrftoken) {
+      this.token = cookies.csrftoken;
+    }
+    
+    if (cookies.ds_user_id) {
+      this.userId = cookies.ds_user_id;
+      this.rankToken = `${this.userId}_${this.uuid}`;
+    }
+    
+    this.isLoggedIn = true;
+  }
+
+  getCookies() {
+    return { ...this.cookies };
   }
 }

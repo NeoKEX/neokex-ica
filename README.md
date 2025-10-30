@@ -25,13 +25,14 @@
 ## Features
 
 - 🔐 Login and session management
+- 🍪 **Netscape cookie format support** (load/save cookies from file)
 - 💬 Send and receive direct messages
 - 📨 Event-based message listening
 - 🔄 Real-time message polling
 - 👥 Thread management
 - ✅ Message read receipts
 - 🤖 Easy bot creation
-- ⏱️ Rate limiting protection
+- 🚀 No client-side rate limiting restrictions
 
 ## Installation
 
@@ -40,6 +41,25 @@ npm install neokex-ica
 ```
 
 ## Quick Start
+
+### Option 1: Cookie-Based Authentication (Recommended)
+
+```javascript
+import InstagramChatAPI from 'neokex-ica';
+
+const bot = new InstagramChatAPI();
+
+bot.loadCookiesFromFile('./cookies.txt');
+
+bot.onMessage(async (msg) => {
+  console.log(`New message: ${msg.text}`);
+  await bot.sendMessage(msg.threadId, 'Auto reply!');
+});
+
+await bot.startListening();
+```
+
+### Option 2: Username/Password Login
 
 ```javascript
 import InstagramChatAPI from 'neokex-ica';
@@ -132,6 +152,39 @@ Approve a pending message request.
 await bot.approveThread('thread_id_here');
 ```
 
+##### `loadCookiesFromFile(filePath)`
+Load cookies from a Netscape format cookie file.
+
+```javascript
+bot.loadCookiesFromFile('./cookies.txt');
+```
+
+##### `saveCookiesToFile(filePath, domain = '.instagram.com')`
+Save current cookies to a Netscape format file.
+
+```javascript
+bot.saveCookiesToFile('./cookies.txt');
+```
+
+##### `setCookies(cookies)`
+Manually set cookies from an object.
+
+```javascript
+bot.setCookies({
+  sessionid: 'your_session_id',
+  csrftoken: 'your_csrf_token',
+  ds_user_id: 'your_user_id'
+});
+```
+
+##### `getCookies()`
+Get current cookies as an object.
+
+```javascript
+const cookies = bot.getCookies();
+console.log(cookies);
+```
+
 #### Event Handlers
 
 ##### `onMessage(callback)`
@@ -184,15 +237,37 @@ bot.onLogin((data) => {
 ```
 
 ##### `onRateLimit(callback)`
-Triggered when rate limited by Instagram.
+Listen for rate limit responses from Instagram (if any are returned by the server).
+
+**Note:** The client does not enforce rate limiting, but Instagram's servers may still return rate limit errors. This event allows you to handle such cases.
 
 ```javascript
 bot.onRateLimit((data) => {
-  console.log(`Rate limited. Retry after ${data.retryAfter}s`);
+  console.log(`Rate limited by Instagram server. Retry after ${data.retryAfter}s`);
 });
 ```
 
-## Complete Example
+## Cookie Format
+
+This package supports Netscape HTTP Cookie File format. You can export cookies from your browser using extensions like:
+- **Chrome/Edge**: "Get cookies.txt" extension
+- **Firefox**: "cookies.txt" extension
+
+The cookie file should look like this:
+
+```
+# Netscape HTTP Cookie File
+.instagram.com  TRUE    /       TRUE    1893456000      sessionid       your_session_id_here
+.instagram.com  TRUE    /       TRUE    1893456000      csrftoken       your_csrf_token_here
+.instagram.com  TRUE    /       TRUE    1893456000      ds_user_id      your_user_id_here
+```
+
+**Required cookies:**
+- `sessionid` - Your Instagram session ID
+- `csrftoken` - CSRF token for requests
+- `ds_user_id` - Your Instagram user ID
+
+## Complete Example (With Cookies)
 
 ```javascript
 import InstagramChatAPI from 'neokex-ica';
@@ -201,8 +276,8 @@ const bot = new InstagramChatAPI();
 
 async function main() {
   try {
-    await bot.login('your_username', 'your_password');
-    console.log('Logged in successfully!');
+    bot.loadCookiesFromFile('./cookies.txt');
+    console.log('Cookies loaded successfully!');
 
     bot.onMessage(async (msg) => {
       console.log(`New message: ${msg.text}`);
@@ -218,8 +293,10 @@ async function main() {
       console.error('Error:', error.message);
     });
 
-    const recentMessages = await bot.getRecentMessages(5);
-    console.log(`Found ${recentMessages.length} recent messages`);
+    const inbox = await bot.getInbox();
+    console.log(`Found ${inbox.threads.length} threads`);
+
+    bot.saveCookiesToFile('./cookies.txt');
 
     await bot.startListening(5000);
     
@@ -249,16 +326,22 @@ await bot.login(
 );
 ```
 
-## Running the Example
+## Installation in Your Project
 
+Install from GitHub:
 ```bash
-npm start
+npm install github:your-username/neokex-ica
 ```
 
-Or with credentials:
-
+Or clone and link locally:
 ```bash
-INSTAGRAM_USERNAME=your_user INSTAGRAM_PASSWORD=your_pass npm start
+git clone https://github.com/your-username/neokex-ica.git
+cd neokex-ica
+npm install
+npm link
+
+# In your bot project
+npm link neokex-ica
 ```
 
 ## License

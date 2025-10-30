@@ -67,6 +67,22 @@ class InstagramChatAPI extends InstagramClient {
   onRateLimit(callback) {
     this.on('ratelimit', callback);
   }
+
+  loadCookiesFromFile(filePath) {
+    return super.loadCookiesFromFile(filePath);
+  }
+
+  saveCookiesToFile(filePath, domain = '.instagram.com') {
+    return super.saveCookiesToFile(filePath, domain);
+  }
+
+  setCookies(cookies) {
+    return super.setCookies(cookies);
+  }
+
+  getCookies() {
+    return super.getCookies();
+  }
 }
 
 export default InstagramChatAPI;
