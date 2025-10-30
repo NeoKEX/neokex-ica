@@ -1,21 +1,8 @@
 import InstagramChatAPI from './src/index.js';
+import banner from './src/Banner.js';
 
-console.log('===========================================');
-console.log('  neokex-ica: Instagram Chat API Library  ');
-console.log('===========================================');
-console.log('✅ Package verified successfully!');
-console.log('\n📦 Package Information:');
-console.log('  - Name: neokex-ica');
-console.log('  - Version: 1.0.0');
-console.log('  - License: MIT');
-console.log('  - Node.js: >=16.0.0');
-console.log('\n🔧 Available Methods (40 total):');
-
-const bot = new InstagramChatAPI();
+const bot = new InstagramChatAPI({ showBanner: false });
 const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(bot))
   .filter(m => m !== 'constructor' && typeof bot[m] === 'function');
 
-console.log('  ' + methods.join(', '));
-
-console.log('\n📖 Documentation: See README.md for complete API reference');
-console.log('===========================================');
+banner.showVerification('neokex-ica', '1.0.0', methods);
