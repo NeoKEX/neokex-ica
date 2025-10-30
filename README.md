@@ -14,7 +14,7 @@
    - **Additional libraries**: Crypto libraries for signing (included), proper session management (implemented), proxy support
 
 3. **Current Status**: This package provides:
-   - ✅ Clean API structure and event-based architecture (40 methods - comparable to ws3-fca)
+   - ✅ Clean API structure and event-based architecture (44 methods total)
    - ✅ **Professional-grade login flow** with pre-login and comprehensive headers
    - ✅ **Production-ready error handling** (401, 429, 2FA detection, challenges)
    - ✅ **Complete HTTP request handling** with all Instagram mobile app headers
