@@ -8,7 +8,11 @@
 **⚠️ DISCLAIMER**: This is an unofficial API that uses reverse-engineered Instagram endpoints. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. Use at your own risk.
 
 ## Recent Changes
-- **October 30, 2025**: Production-grade Instagram Chat API v1.1.0
+- **October 30, 2025**: Production-grade Instagram Chat API v1.1.0 + Professional Logging System
+  - ✅ **Professional logging system** (ws3-fca style with colors, timestamps, log levels)
+  - ✅ **Beautiful ASCII art banner** displayed on initialization
+  - ✅ **Colored terminal output** (INFO, SUCCESS, WARN, ERROR, DEBUG, EVENT, etc.)
+  - ✅ **Timestamped logs** with [HH:MM:SS] format
   - ✅ **Professional-grade login flow** with pre-login and comprehensive headers
   - ✅ **Advanced error handling** (401, 429, 2FA detection, challenge detection)
   - ✅ **Complete Instagram mobile app headers** (X-IG-Capabilities, X-IG-Connection-Type, etc.)
@@ -16,7 +20,7 @@
   - ✅ **Enhanced session management** (all device IDs: phoneId, adId, waterfallId)
   - ✅ **Improved cookie management** with proper extraction and merging
   - ✅ Created comprehensive IMPLEMENTATION_NOTES.md with production guidance
-  - ✅ Comprehensive API with 40 methods (comparable to ws3-fca)
+  - ✅ Comprehensive API with 44 methods (comparable to ws3-fca)
   - ✅ Implemented multiple message types (text, photo, video, voice, sticker)
   - ✅ Added typing indicators (send & detect)
   - ✅ Added reactions, unsend, thread management (mute, archive, delete, etc.)
@@ -33,10 +37,12 @@
 ```
 neokex-ica/
 ├── src/
-│   ├── index.js           # Main API export (40 methods)
+│   ├── index.js           # Main API export (44 methods)
 │   ├── InstagramClient.js # Core client with login/session
 │   ├── DirectMessage.js   # DM functionality & polling
 │   ├── CookieManager.js   # Cookie handling (Netscape format)
+│   ├── Logger.js          # Professional logging utility (ws3-fca style)
+│   ├── Banner.js          # ASCII art banner utility
 │   └── utils.js           # Helper utilities
 ├── README.md              # Complete API documentation
 ├── IMPLEMENTATION_NOTES.md # Advanced implementation guide
@@ -45,14 +51,17 @@ neokex-ica/
 ├── LICENSE                # MIT License
 ├── .npmignore             # npm package exclusions
 ├── package.json           # npm package config (v1.0.0)
-└── verify.js              # Package verification script
+├── verify.js              # Package verification script
+└── example.js             # Usage example with logging demo
 ```
 
 ### Key Components
 1. **InstagramClient**: Handles authentication, session management, and API requests
 2. **DirectMessage**: Manages sending/receiving messages and thread operations
 3. **CookieManager**: Handles Netscape format cookie loading/saving
-4. **Event System**: EventEmitter-based system for real-time message handling
+4. **Logger**: Professional colored logging system with timestamps (ws3-fca style)
+5. **Banner**: ASCII art banner display for professional appearance
+6. **Event System**: EventEmitter-based system for real-time message handling
 
 ### Dependencies
 - `axios`: HTTP client for API requests
@@ -61,13 +70,14 @@ neokex-ica/
 ## User Preferences
 - **Pure API library package** (no bot implementation included)
 - **Designed for npm/GitHub distribution** - professional package ready to publish
-- As advanced as ws3-fca (40 methods with comprehensive features)
+- **ws3-fca style** - professional logging with colors, timestamps, and ASCII banner (44 methods)
 - Focus on chat/DM functionality for Instagram bots
 - Node.js implementation (ES6 modules)
 - Support for Netscape cookie format
 - **ZERO client-side rate limiting** (core requirement - confirmed implemented)
+- **Professional presentation** - colored logs and beautiful banner display
 
-## API Features (40 Methods Total)
+## API Features (44 Methods Total)
 - **Authentication**: login, cookie management, session state
 - **Messaging**: text, photo, video, voice, sticker, link, reactions, unsend
 - **Threads**: mute, unmute, archive, unarchive, delete, leave, add/remove users, update title
