@@ -58,7 +58,7 @@ class Banner {
   }
 
   showVerification(packageName, version, methods) {
-    const { cyan, green, yellow, blue, bright, dim, reset } = this.colors;
+    const { cyan, green, yellow, blue, magenta, bright, dim, reset } = this.colors;
     
     console.log('');
     console.log(`${cyan}${bright}═══════════════════════════════════════════════════════════${reset}`);
