@@ -2,6 +2,7 @@ import axios from 'axios';
 import EventEmitter from 'eventemitter3';
 import { generateDeviceId, generateUUID, generatePhoneId, generateAdId, generateWaterfallId, signPayload, sleep } from './utils.js';
 import CookieManager from './CookieManager.js';
+import logger from './Logger.js';
 
 export default class InstagramClient extends EventEmitter {
   constructor() {
@@ -35,6 +36,7 @@ export default class InstagramClient extends EventEmitter {
 
   async preLoginFlow() {
     try {
+      logger.auth('Initiating pre-login flow');
       const response = await axios.get(
         `${this.baseUrl}/accounts/get_prefill_candidates/`,
         {
@@ -70,9 +72,10 @@ export default class InstagramClient extends EventEmitter {
         this.wwwClaim = response.headers['ig-set-www-claim'];
       }
 
+      logger.success('Pre-login flow completed');
       return true;
     } catch (error) {
-      console.warn('Pre-login flow failed, continuing with login:', error.message);
+      logger.warn('Pre-login flow failed, continuing with login', { error: error.message });
       return false;
     }
   }
@@ -82,6 +85,7 @@ export default class InstagramClient extends EventEmitter {
     this.password = password;
 
     try {
+      logger.info(`Attempting login for ${username}`);
       await this.preLoginFlow();
 
       const timestamp = Date.now();
@@ -191,15 +195,22 @@ export default class InstagramClient extends EventEmitter {
         }
 
         this.isLoggedIn = true;
+        logger.login(this.username);
+        logger.session(`User ID: ${this.userId}`);
         this.emit('login', { userId: this.userId, username: this.username });
         return { success: true, userId: this.userId, username: this.username };
       } else {
         const errorType = data?.error_type || 'unknown';
         const statusType = data?.status || 'unknown';
         const errorMsg = data?.message || 'No user data received';
-        throw new Error(`Login failed (${errorType}, status: ${statusType}): ${errorMsg}`);
+        const error = new Error(`Login failed (${errorType}, status: ${statusType}): ${errorMsg}`);
+        logger.error('Login failed', { errorType, statusType, message: errorMsg });
+        throw error;
       }
     } catch (error) {
+      if (!error.message.includes('Login failed')) {
+        logger.error('Login error', { error: error.message });
+      }
       this.emit('error', error);
       throw error;
     }
@@ -257,11 +268,13 @@ export default class InstagramClient extends EventEmitter {
       if (response.status === 401) {
         this.isLoggedIn = false;
         const errorType = response.data?.error_type || 'unauthorized';
+        logger.error('Session expired - Please login again', { errorType });
         throw new Error(`Session expired (${errorType}). Please login again.`);
       }
 
       if (response.status === 429) {
         const retryAfter = response.headers['retry-after'] || 'unknown';
+        logger.rateLimit(retryAfter);
         this.emit('ratelimit', { retryAfter });
         throw new Error(`Rate limited by Instagram. Retry after: ${retryAfter}`);
       }
@@ -270,14 +283,17 @@ export default class InstagramClient extends EventEmitter {
         const errorType = response.data?.error_type || 'unknown';
         const statusType = response.data?.status || 'unknown';
         const errorMsg = response.data?.message || `Request failed with status ${response.status}`;
+        logger.error('API request failed', { errorType, statusType, message: errorMsg });
         throw new Error(`Request failed (${errorType}, status: ${statusType}): ${errorMsg}`);
       }
 
       return response.data;
     } catch (error) {
       if (error.response && error.response.status === 429) {
+        const retryAfter = error.response.headers['retry-after'] || 'unknown';
+        logger.rateLimit(retryAfter);
         this.emit('ratelimit', { 
-          retryAfter: error.response.headers['retry-after'] || 'unknown' 
+          retryAfter 
         });
       }
       
@@ -303,6 +319,7 @@ export default class InstagramClient extends EventEmitter {
   }
 
   loadCookiesFromFile(filePath) {
+    logger.info(`Loading cookies from ${filePath}`);
     this.cookies = CookieManager.loadFromFile(filePath);
     
     if (this.cookies.csrftoken) {
@@ -315,6 +332,8 @@ export default class InstagramClient extends EventEmitter {
     }
     
     this.isLoggedIn = true;
+    logger.success('Cookies loaded successfully');
+    logger.session(`Authenticated via cookies (User ID: ${this.userId})`);
     this.emit('cookies:loaded', { cookieFile: filePath });
     
     return this.cookies;
@@ -322,6 +341,7 @@ export default class InstagramClient extends EventEmitter {
 
   saveCookiesToFile(filePath, domain = '.instagram.com') {
     CookieManager.saveToFile(filePath, this.cookies, domain);
+    logger.success(`Cookies saved to ${filePath}`);
     this.emit('cookies:saved', { cookieFile: filePath });
   }
 
