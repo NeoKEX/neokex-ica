@@ -37,7 +37,7 @@ export function signPayload(payload, key) {
   const jsonPayload = JSON.stringify(payload);
   const signature = generateSignature(jsonPayload, key);
   return {
-    signed_body: `SIGNATURE.${jsonPayload}`,
+    signed_body: `${signature}.${jsonPayload}`,
     ig_sig_key_version: '4'
   };
 }

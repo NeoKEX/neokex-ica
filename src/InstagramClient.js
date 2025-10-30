@@ -1,6 +1,6 @@
 import axios from 'axios';
 import EventEmitter from 'eventemitter3';
-import { generateDeviceId, generateUUID, generatePhoneId, generateAdId, generateWaterfallId, sleep } from './utils.js';
+import { generateDeviceId, generateUUID, generatePhoneId, generateAdId, generateWaterfallId, signPayload, sleep } from './utils.js';
 import CookieManager from './CookieManager.js';
 
 export default class InstagramClient extends EventEmitter {
@@ -19,6 +19,8 @@ export default class InstagramClient extends EventEmitter {
     this.cookies = {};
     this.isLoggedIn = false;
     this.mid = null;
+    this.wwwClaim = null;
+    this.bloksVersionId = null;
     
     this.baseUrl = 'https://i.instagram.com/api/v1';
     this.userAgent = 'Instagram 275.0.0.27.98 Android (28/9; 480dpi; 1080x2148; OnePlus; ONEPLUS A6000; OnePlus6; qcom; en_US; 458229237)';
@@ -26,6 +28,9 @@ export default class InstagramClient extends EventEmitter {
     this.igCapabilities = '3brTv10=';
     this.igConnectionType = 'WIFI';
     this.igConnectionSpeed = '3000kbps';
+    this.bloksVersionId = 'eec9f8a8f269e7a5225acf6d8f118aee6ef2ec76c6c045e32fa2b64a5cf0e5c3';
+    
+    this.SIGNATURE_KEY = 'SIGNATURE';
   }
 
   async preLoginFlow() {
@@ -43,6 +48,7 @@ export default class InstagramClient extends EventEmitter {
             'X-IG-Connection-Speed': this.igConnectionSpeed,
             'X-IG-App-ID': this.igAppId,
             'X-FB-HTTP-Engine': 'Liger',
+            'X-Bloks-Version-Id': this.bloksVersionId,
           },
         }
       );
@@ -50,10 +56,18 @@ export default class InstagramClient extends EventEmitter {
       if (response.headers['set-cookie']) {
         const cookies = CookieManager.extractFromResponse(response.headers);
         this.cookies = { ...this.cookies, ...cookies };
+        
+        if (cookies.mid) {
+          this.mid = cookies.mid;
+        }
       }
 
       if (response.data.csrf_token) {
         this.token = response.data.csrf_token;
+      }
+      
+      if (response.headers['ig-set-www-claim']) {
+        this.wwwClaim = response.headers['ig-set-www-claim'];
       }
 
       return true;
@@ -71,9 +85,10 @@ export default class InstagramClient extends EventEmitter {
       await this.preLoginFlow();
 
       const timestamp = Date.now();
-      const payload = new URLSearchParams({
+      const timestampSec = Math.floor(timestamp / 1000);
+      const payloadData = {
         username: username,
-        enc_password: `#PWD_INSTAGRAM_BROWSER:0:${timestamp}:${password}`,
+        enc_password: `#PWD_INSTAGRAM:4:${timestampSec}:${password}`,
         device_id: this.deviceId,
         phone_id: this.phoneId,
         guid: this.uuid,
@@ -82,56 +97,85 @@ export default class InstagramClient extends EventEmitter {
         login_attempt_count: '0',
         jazoest: '22381',
         country_codes: JSON.stringify([{ country_code: '1', source: 'default' }]),
-      });
+        _csrftoken: this.token || '',
+        _uuid: this.uuid,
+      };
+
+      const signedPayload = signPayload(payloadData, this.SIGNATURE_KEY);
+      const payload = new URLSearchParams(signedPayload);
 
       const cookieString = Object.entries(this.cookies)
         .map(([key, value]) => `${key}=${value}`)
         .join('; ');
 
+      const headers = {
+        'User-Agent': this.userAgent,
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept': '*/*',
+        'Accept-Language': 'en-US',
+        'Accept-Encoding': 'gzip, deflate',
+        'X-IG-Capabilities': this.igCapabilities,
+        'X-IG-Connection-Type': this.igConnectionType,
+        'X-IG-Connection-Speed': this.igConnectionSpeed,
+        'X-IG-App-ID': this.igAppId,
+        'X-FB-HTTP-Engine': 'Liger',
+        'X-Bloks-Version-Id': this.bloksVersionId,
+        'X-CSRFToken': this.token || '',
+        'Cookie': cookieString,
+        'X-Pigeon-Rawclienttime': (timestamp / 1000).toFixed(3),
+      };
+
+      if (this.mid) {
+        headers['X-MID'] = this.mid;
+      }
+
+      if (this.wwwClaim) {
+        headers['X-IG-WWW-Claim'] = this.wwwClaim;
+      }
+
       const loginResponse = await axios.post(
         `${this.baseUrl}/accounts/login/`,
         payload.toString(),
         {
-          headers: {
-            'User-Agent': this.userAgent,
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Accept': '*/*',
-            'Accept-Language': 'en-US',
-            'Accept-Encoding': 'gzip, deflate',
-            'X-IG-Capabilities': this.igCapabilities,
-            'X-IG-Connection-Type': this.igConnectionType,
-            'X-IG-Connection-Speed': this.igConnectionSpeed,
-            'X-IG-App-ID': this.igAppId,
-            'X-FB-HTTP-Engine': 'Liger',
-            'X-CSRFToken': this.token || '',
-            'Cookie': cookieString,
-          },
+          headers,
           validateStatus: (status) => status < 500,
         }
       );
 
-      if (loginResponse.status === 400) {
-        const errorMsg = loginResponse.data?.message || 'Bad request - Check credentials';
-        throw new Error(`Login failed: ${errorMsg}`);
+      const data = loginResponse.data;
+      const status = loginResponse.status;
+
+      if (status === 400) {
+        const errorType = data?.error_type || 'bad_request';
+        const errorMsg = data?.message || 'Bad request - Check credentials';
+        const detailedMsg = `Login failed (${errorType}): ${errorMsg}`;
+        
+        if (data?.status === 'fail') {
+          throw new Error(`${detailedMsg}. Status: ${data.status}`);
+        }
+        throw new Error(detailedMsg);
       }
 
-      if (loginResponse.status === 429) {
-        throw new Error('Rate limited by Instagram. Please wait before trying again.');
+      if (status === 429) {
+        const errorMsg = data?.message || 'Too many requests';
+        throw new Error(`Rate limited by Instagram: ${errorMsg}. Please wait before trying again.`);
       }
 
-      if (loginResponse.data.two_factor_required) {
-        this.twoFactorInfo = loginResponse.data.two_factor_info;
-        throw new Error('Two-factor authentication required. Please use loginWith2FA()');
+      if (data.two_factor_required) {
+        this.twoFactorInfo = data.two_factor_info;
+        const twoFactorId = data.two_factor_info?.two_factor_identifier || 'unknown';
+        throw new Error(`Two-factor authentication required (ID: ${twoFactorId}). Please use loginWith2FA() or cookie-based auth.`);
       }
 
-      if (loginResponse.data.challenge) {
-        throw new Error('Challenge required. Account may need verification through Instagram app.');
+      if (data.challenge) {
+        const challengeUrl = data.challenge?.api_path || 'unknown';
+        throw new Error(`Challenge required (${challengeUrl}). Account may need verification through Instagram app.`);
       }
 
-      if (loginResponse.data.logged_in_user) {
-        this.userId = loginResponse.data.logged_in_user.pk;
+      if (data.logged_in_user) {
+        this.userId = data.logged_in_user.pk;
         this.rankToken = `${this.userId}_${this.uuid}`;
-        this.token = loginResponse.headers['x-csrftoken'] || loginResponse.data.csrf_token;
+        this.token = loginResponse.headers['x-csrftoken'] || data.csrf_token;
         
         if (loginResponse.headers['set-cookie']) {
           const newCookies = CookieManager.extractFromResponse(loginResponse.headers);
@@ -141,13 +185,19 @@ export default class InstagramClient extends EventEmitter {
         if (this.cookies.mid) {
           this.mid = this.cookies.mid;
         }
+        
+        if (loginResponse.headers['ig-set-www-claim']) {
+          this.wwwClaim = loginResponse.headers['ig-set-www-claim'];
+        }
 
         this.isLoggedIn = true;
         this.emit('login', { userId: this.userId, username: this.username });
         return { success: true, userId: this.userId, username: this.username };
       } else {
-        const errorMsg = loginResponse.data?.message || 'No user data received';
-        throw new Error(`Login failed: ${errorMsg}`);
+        const errorType = data?.error_type || 'unknown';
+        const statusType = data?.status || 'unknown';
+        const errorMsg = data?.message || 'No user data received';
+        throw new Error(`Login failed (${errorType}, status: ${statusType}): ${errorMsg}`);
       }
     } catch (error) {
       this.emit('error', error);
@@ -179,7 +229,17 @@ export default class InstagramClient extends EventEmitter {
       'X-IG-Connection-Speed': this.igConnectionSpeed,
       'X-Device-ID': this.deviceId,
       'X-FB-HTTP-Engine': 'Liger',
+      'X-Bloks-Version-Id': this.bloksVersionId,
+      'X-Pigeon-Rawclienttime': (Date.now() / 1000).toFixed(3),
     };
+
+    if (this.mid) {
+      headers['X-MID'] = this.mid;
+    }
+
+    if (this.wwwClaim) {
+      headers['X-IG-WWW-Claim'] = this.wwwClaim;
+    }
 
     if (method === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
@@ -196,19 +256,21 @@ export default class InstagramClient extends EventEmitter {
 
       if (response.status === 401) {
         this.isLoggedIn = false;
-        throw new Error('Session expired. Please login again.');
+        const errorType = response.data?.error_type || 'unauthorized';
+        throw new Error(`Session expired (${errorType}). Please login again.`);
       }
 
       if (response.status === 429) {
-        this.emit('ratelimit', { 
-          retryAfter: response.headers['retry-after'] || 'unknown' 
-        });
-        throw new Error('Rate limited by Instagram. Please wait before trying again.');
+        const retryAfter = response.headers['retry-after'] || 'unknown';
+        this.emit('ratelimit', { retryAfter });
+        throw new Error(`Rate limited by Instagram. Retry after: ${retryAfter}`);
       }
 
       if (response.status >= 400) {
+        const errorType = response.data?.error_type || 'unknown';
+        const statusType = response.data?.status || 'unknown';
         const errorMsg = response.data?.message || `Request failed with status ${response.status}`;
-        throw new Error(errorMsg);
+        throw new Error(`Request failed (${errorType}, status: ${statusType}): ${errorMsg}`);
       }
 
       return response.data;
@@ -311,6 +373,8 @@ export default class InstagramClient extends EventEmitter {
       waterfallId: this.waterfallId,
       token: this.token,
       mid: this.mid,
+      wwwClaim: this.wwwClaim,
+      bloksVersionId: this.bloksVersionId,
       cookies: this.getCookies(),
       isLoggedIn: this.isLoggedIn,
     };
@@ -326,6 +390,8 @@ export default class InstagramClient extends EventEmitter {
     if (sessionState.waterfallId) this.waterfallId = sessionState.waterfallId;
     if (sessionState.token) this.token = sessionState.token;
     if (sessionState.mid) this.mid = sessionState.mid;
+    if (sessionState.wwwClaim) this.wwwClaim = sessionState.wwwClaim;
+    if (sessionState.bloksVersionId) this.bloksVersionId = sessionState.bloksVersionId;
     if (sessionState.cookies) this.cookies = sessionState.cookies;
     if (sessionState.userId) {
       this.rankToken = `${this.userId}_${this.uuid}`;

@@ -19,23 +19,36 @@ This library uses Instagram's **private/unofficial API** which:
 
 ### ✅ Implemented (Production-Ready)
 1. **Pre-login Flow**: Fetches initial CSRF tokens and cookies before login
+   - Captures mid, www_claim from headers
+   - Establishes session before authentication
 2. **Professional Headers**: Complete set of Instagram mobile app headers
-   - X-IG-Capabilities
-   - X-IG-Connection-Type
-   - X-IG-Connection-Speed
-   - X-FB-HTTP-Engine
-   - X-IG-App-ID
-3. **Enhanced Login**: Improved login with additional device parameters
+   - X-IG-Capabilities, X-IG-Connection-Type, X-IG-Connection-Speed
+   - X-FB-HTTP-Engine, X-IG-App-ID
+   - **X-MID**: Machine identifier from cookies
+   - **X-IG-WWW-Claim**: Authorization claim from Instagram
+   - **X-Bloks-Version-Id**: Instagram's Bloks framework version
+   - **X-Pigeon-Rawclienttime**: Timestamp for request verification
+3. **Payload Signing Framework**: HMAC-SHA256 signing utilities integrated
+   - `signPayload()` function integrated into login
+   - **⚠️ CRITICAL**: Uses placeholder signature key 'SIGNATURE'
+   - **To work with real endpoints**: Replace `this.SIGNATURE_KEY` with actual Instagram signature key
+   - Key extraction requires reverse engineering Instagram APK (see below)
+4. **Enhanced Login**: Improved login with additional device parameters
    - phone_id, adid, google_tokens
    - jazoest, country_codes
-4. **Better Error Handling**: Specific error messages for different failure scenarios
-   - Invalid credentials (400)
-   - Rate limiting (429)
-   - Two-factor authentication detection
-   - Challenge detection
-   - Session expiration (401)
-5. **Cookie Management**: Proper cookie extraction and persistence
-6. **Session State Management**: Complete session saving/loading with all device IDs
+   - _csrftoken, _uuid
+5. **Better Error Handling**: Surfaces Instagram's error_type and status fields
+   - Invalid credentials (400) with error_type
+   - Rate limiting (429) with retry information
+   - Two-factor authentication detection with identifier
+   - Challenge detection with api_path
+   - Session expiration (401) with error_type
+6. **Cookie Management**: Proper cookie extraction and persistence
+   - Captures and merges cookies from all responses
+   - Persists mid for X-MID header
+7. **Session State Management**: Complete session saving/loading with all device IDs
+   - All device identifiers (deviceId, phoneId, adId, waterfallId)
+   - Session tokens (mid, wwwClaim, bloksVersionId)
 
 ### ⚠️ Partially Implemented (Framework Ready)
 1. **Basic Text Messaging**: Works with current implementation
@@ -45,11 +58,24 @@ This library uses Instagram's **private/unofficial API** which:
 ### ❌ Not Implemented (Requires Advanced Work)
 The following features require additional reverse engineering and are beyond the scope of this framework:
 
-1. **Payload Signing with HMAC**
-   - Current: Framework includes signature utilities in utils.js
-   - Needed: Actual signature key from Instagram app (requires reverse engineering)
-   - Location: `src/utils.js` has `generateSignature()` and `signPayload()` functions
-   - **Why it's hard**: Instagram's signature key is embedded in their mobile app binary and changes periodically
+1. **⚠️ CRITICAL: Instagram Signature Key**
+   - Current: Payload signing is integrated but uses placeholder key 'SIGNATURE'
+   - Needed: Real Instagram signature key from the mobile app
+   - Location: `src/InstagramClient.js` line 32: `this.SIGNATURE_KEY = 'SIGNATURE';`
+   - **Impact**: Login will fail with 400 error on real Instagram endpoints without the real key
+   - **Why it's hard**: Instagram's signature key is:
+     - Embedded in their mobile app binary (APK)
+     - Obfuscated and changes periodically
+     - Different across app versions
+     - Protected by Instagram's security measures
+   - **How to extract**:
+     ```bash
+     # Download Instagram APK
+     # Use jadx or apktool to decompile
+     # Search for strings like "IG_SIG_KEY" or signature-related code
+     # The key is typically a 64-character hex string
+     ```
+   - **Workaround**: Use cookie-based authentication instead (recommended)
 
 2. **Media Uploads** (photos, videos, voice notes)
    - Current: Method signatures exist but use placeholder implementations
