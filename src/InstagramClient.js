@@ -170,4 +170,47 @@ export default class InstagramClient extends EventEmitter {
   getCookies() {
     return { ...this.cookies };
   }
+
+  getCurrentUserID() {
+    return this.userId;
+  }
+
+  getCurrentUsername() {
+    return this.username;
+  }
+
+  async getUserInfo(userId) {
+    const data = await this.request(`/users/${userId}/info/`);
+    return data.user;
+  }
+
+  async getUserInfoByUsername(username) {
+    const data = await this.request(`/users/${username}/usernameinfo/`);
+    return data.user;
+  }
+
+  async getSessionState() {
+    return {
+      userId: this.userId,
+      username: this.username,
+      deviceId: this.deviceId,
+      uuid: this.uuid,
+      token: this.token,
+      cookies: this.getCookies(),
+      isLoggedIn: this.isLoggedIn,
+    };
+  }
+
+  loadSessionState(sessionState) {
+    if (sessionState.userId) this.userId = sessionState.userId;
+    if (sessionState.username) this.username = sessionState.username;
+    if (sessionState.deviceId) this.deviceId = sessionState.deviceId;
+    if (sessionState.uuid) this.uuid = sessionState.uuid;
+    if (sessionState.token) this.token = sessionState.token;
+    if (sessionState.cookies) this.cookies = sessionState.cookies;
+    if (sessionState.userId) {
+      this.rankToken = `${this.userId}_${this.uuid}`;
+      this.isLoggedIn = true;
+    }
+  }
 }

@@ -68,6 +68,10 @@ class InstagramChatAPI extends InstagramClient {
     this.on('ratelimit', callback);
   }
 
+  onTyping(callback) {
+    this.on('typing', callback);
+  }
+
   loadCookiesFromFile(filePath) {
     return super.loadCookiesFromFile(filePath);
   }
@@ -82,6 +86,102 @@ class InstagramChatAPI extends InstagramClient {
 
   getCookies() {
     return super.getCookies();
+  }
+
+  getCurrentUserID() {
+    return super.getCurrentUserID();
+  }
+
+  getCurrentUsername() {
+    return super.getCurrentUsername();
+  }
+
+  async getUserInfo(userId) {
+    return await super.getUserInfo(userId);
+  }
+
+  async getUserInfoByUsername(username) {
+    return await super.getUserInfoByUsername(username);
+  }
+
+  async getSessionState() {
+    return await super.getSessionState();
+  }
+
+  loadSessionState(sessionState) {
+    return super.loadSessionState(sessionState);
+  }
+
+  async sendPhoto(threadId, photoUrl) {
+    return await this.dm.sendPhoto(threadId, photoUrl);
+  }
+
+  async sendVideo(threadId, videoUrl) {
+    return await this.dm.sendVideo(threadId, videoUrl);
+  }
+
+  async sendVoiceNote(threadId, audioUrl) {
+    return await this.dm.sendVoiceNote(threadId, audioUrl);
+  }
+
+  async sendSticker(threadId, stickerId) {
+    return await this.dm.sendSticker(threadId, stickerId);
+  }
+
+  async sendLink(threadId, linkUrl, linkText = '') {
+    return await this.dm.sendLink(threadId, linkUrl, linkText);
+  }
+
+  async sendReaction(threadId, itemId, emoji) {
+    return await this.dm.sendReaction(threadId, itemId, emoji);
+  }
+
+  async removeReaction(threadId, itemId) {
+    return await this.dm.removeReaction(threadId, itemId);
+  }
+
+  async unsendMessage(threadId, itemId) {
+    return await this.dm.unsendMessage(threadId, itemId);
+  }
+
+  async indicateTyping(threadId, isTyping = true) {
+    return await this.dm.indicateTyping(threadId, isTyping);
+  }
+
+  async muteThread(threadId) {
+    return await this.dm.muteThread(threadId);
+  }
+
+  async unmuteThread(threadId) {
+    return await this.dm.unmuteThread(threadId);
+  }
+
+  async deleteThread(threadId) {
+    return await this.dm.deleteThread(threadId);
+  }
+
+  async archiveThread(threadId) {
+    return await this.dm.archiveThread(threadId);
+  }
+
+  async unarchiveThread(threadId) {
+    return await this.dm.unarchiveThread(threadId);
+  }
+
+  async leaveThread(threadId) {
+    return await this.dm.leaveThread(threadId);
+  }
+
+  async addUsersToThread(threadId, userIds) {
+    return await this.dm.addUsersToThread(threadId, userIds);
+  }
+
+  async removeUserFromThread(threadId, userId) {
+    return await this.dm.removeUserFromThread(threadId, userId);
+  }
+
+  async updateThreadTitle(threadId, title) {
+    return await this.dm.updateThreadTitle(threadId, title);
   }
 }
 

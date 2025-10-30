@@ -134,6 +134,16 @@ export default class DirectMessage {
                   });
                 }
               }
+              
+              if (latestItem.item_type === 'action_log' && latestItem.action_log) {
+                if (latestItem.action_log.description && latestItem.action_log.description.includes('typing')) {
+                  this.client.emit('typing', {
+                    threadId: thread.thread_id,
+                    userId: latestItem.user_id,
+                    isTyping: true,
+                  });
+                }
+              }
             }
           }
         }
@@ -180,5 +190,288 @@ export default class DirectMessage {
     }
 
     return messages;
+  }
+
+  async sendPhoto(threadId, photoUrl) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      recipient_users: '[]',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      photo_url: photoUrl,
+      thread_ids: `["${threadId}"]`,
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/configure_photo/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async sendVideo(threadId, videoUrl) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      recipient_users: '[]',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      video_url: videoUrl,
+      thread_ids: `["${threadId}"]`,
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/configure_video/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async sendVoiceNote(threadId, audioUrl) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      recipient_users: '[]',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      upload_id: generateUUID(),
+      voice_url: audioUrl,
+      thread_ids: `["${threadId}"]`,
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/voice/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async sendSticker(threadId, stickerId) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      recipient_users: '[]',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      sticker_id: stickerId,
+      thread_ids: `["${threadId}"]`,
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/sticker/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async sendLink(threadId, linkUrl, linkText = '') {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      recipient_users: '[]',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      link_urls: JSON.stringify([linkUrl]),
+      link_text: linkText,
+      thread_ids: `["${threadId}"]`,
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/link/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async sendReaction(threadId, itemId, emoji) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      item_type: 'reaction',
+      reaction_type: 'like',
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+      node_type: 'item',
+      item_id: itemId,
+      reaction_status: 'created',
+      emoji: emoji || '❤️',
+    });
+
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/items/${itemId}/react/`,
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async removeReaction(threadId, itemId) {
+    const clientContext = generateUUID();
+    
+    const payload = new URLSearchParams({
+      action: 'send_item',
+      client_context: clientContext,
+      device_id: this.client.deviceId,
+      mutation_token: clientContext,
+    });
+
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/items/${itemId}/unreact/`,
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async unsendMessage(threadId, itemId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/items/${itemId}/delete/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async indicateTyping(threadId, isTyping = true) {
+    const payload = new URLSearchParams({
+      thread_id: threadId,
+      is_typing: isTyping ? '1' : '0',
+    });
+
+    const data = await this.client.request(
+      '/direct_v2/threads/broadcast/activity_indicator/',
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async muteThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/mute/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async unmuteThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/unmute/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async deleteThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/delete/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async archiveThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/hide/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async unarchiveThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/unhide/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async leaveThread(threadId) {
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/leave/`,
+      'POST',
+      new URLSearchParams({}).toString()
+    );
+
+    return data;
+  }
+
+  async addUsersToThread(threadId, userIds) {
+    const payload = new URLSearchParams({
+      user_ids: JSON.stringify(userIds),
+    });
+
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/add_user/`,
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async removeUserFromThread(threadId, userId) {
+    const payload = new URLSearchParams({
+      user_id: userId.toString(),
+    });
+
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/remove_user/`,
+      'POST',
+      payload.toString()
+    );
+
+    return data;
+  }
+
+  async updateThreadTitle(threadId, title) {
+    const payload = new URLSearchParams({
+      title: title,
+    });
+
+    const data = await this.client.request(
+      `/direct_v2/threads/${threadId}/update_title/`,
+      'POST',
+      payload.toString()
+    );
+
+    return data;
   }
 }

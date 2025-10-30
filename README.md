@@ -14,25 +14,57 @@
    - **Additional libraries**: Crypto libraries for signing, proper session management, proxy support
 
 3. **Current Status**: This package provides:
-   - ✅ Clean API structure and event-based architecture
+   - ✅ Clean API structure and event-based architecture (40 methods - comparable to ws3-fca)
    - ✅ Basic HTTP request handling and session management
-   - ✅ Complete method signatures for all DM operations
-   - ⚠️ Simplified authentication (needs advanced signing implementation)
-   - ⚠️ Basic payload formats (may need additional fields/signatures)
+   - ✅ Complete method signatures for all messaging and thread operations
+   - ✅ Cookie-based authentication (Netscape format)
+   - ⚠️ Text messaging works with basic implementation
+   - ⚠️ Media methods (photo/video/voice/sticker) require proper upload implementation
+   - ⚠️ Advanced authentication needs payload signing (HMAC, pre-login flows)
    
-   **To make this production-ready**, you'll need to research Instagram's current private API requirements and implement proper payload signing and authentication flows.
+   **To make this production-ready**: Research Instagram's current private API requirements. Media uploads need proper Instagram upload flows (not direct URLs). See IMPLEMENTATION_NOTES.md for detailed guidance.
 
 ## Features
 
-- 🔐 Login and session management
-- 🍪 **Netscape cookie format support** (load/save cookies from file)
-- 💬 Send and receive direct messages
-- 📨 Event-based message listening
-- 🔄 Real-time message polling
-- 👥 Thread management
-- ✅ Message read receipts
-- 🤖 Easy bot creation
-- 🚀 No client-side rate limiting restrictions
+### 🔐 Authentication & Session
+- Username/password login
+- Cookie-based authentication (Netscape format)
+- Session state management (save/load)
+- No client-side rate limiting
+
+### 💬 Messaging Capabilities
+- **Send text messages** to threads or users ✅
+- **Send photos** and images (framework - needs upload implementation)
+- **Send videos** (framework - needs upload implementation)
+- **Send voice notes** (framework - needs upload implementation)
+- **Send stickers** by ID (framework)
+- **Send links** with optional text (framework)
+- **React to messages** with emojis (framework)
+- **Remove reactions** from messages (framework)
+- **Unsend messages** (delete sent messages - framework)
+- **Mark messages as seen/read** ✅
+
+### 👥 Thread Management
+- Get inbox and specific threads
+- **Mute/unmute** threads
+- **Archive/unarchive** threads
+- **Delete threads**
+- **Leave group threads**
+- **Add/remove users** from threads
+- **Update thread title**
+- Approve pending message requests
+
+### 📊 User & Info Methods
+- **Get current user ID** and username
+- **Get user info** by ID or username
+- Search users
+- Real-time message polling
+
+### 🎭 Interactive Features
+- **Typing indicators** (send and detect typing status)
+- Event-based message listening
+- Pending request notifications
+- Error and rate limit event handlers
 
 ## Installation
 
@@ -185,6 +217,197 @@ const cookies = bot.getCookies();
 console.log(cookies);
 ```
 
+##### `getCurrentUserID()`
+Get the bot's Instagram user ID.
+
+```javascript
+const userId = bot.getCurrentUserID();
+console.log(`Bot User ID: ${userId}`);
+```
+
+##### `getCurrentUsername()`
+Get the bot's Instagram username.
+
+```javascript
+const username = bot.getCurrentUsername();
+console.log(`Bot Username: ${username}`);
+```
+
+##### `getUserInfo(userId)`
+Get detailed information about a user by their ID.
+
+```javascript
+const userInfo = await bot.getUserInfo('123456789');
+console.log(userInfo);
+```
+
+##### `getUserInfoByUsername(username)`
+Get detailed information about a user by their username.
+
+```javascript
+const userInfo = await bot.getUserInfoByUsername('instagram');
+console.log(userInfo);
+```
+
+##### `getSessionState()`
+Get the complete session state for saving.
+
+```javascript
+const sessionState = await bot.getSessionState();
+// Save to file for later use
+fs.writeFileSync('session.json', JSON.stringify(sessionState));
+```
+
+##### `loadSessionState(sessionState)`
+Load a previously saved session state.
+
+```javascript
+const sessionState = JSON.parse(fs.readFileSync('session.json'));
+bot.loadSessionState(sessionState);
+```
+
+### Advanced Messaging Methods
+
+##### `sendPhoto(threadId, photoUrl)`
+Send a photo to a thread.
+
+**Note:** This is a framework method. Instagram requires proper media upload flows (upload to Instagram, get upload_id, then send). See IMPLEMENTATION_NOTES.md for details.
+
+```javascript
+await bot.sendPhoto(threadId, uploadId); // Needs upload_id, not direct URL
+```
+
+##### `sendVideo(threadId, videoUrl)`
+Send a video to a thread.
+
+**Note:** Framework method - requires proper Instagram video upload implementation.
+
+```javascript
+await bot.sendVideo(threadId, uploadId);
+```
+
+##### `sendVoiceNote(threadId, audioUrl)`
+Send a voice note to a thread.
+
+**Note:** Framework method - requires proper Instagram audio upload implementation.
+
+```javascript
+await bot.sendVoiceNote(threadId, uploadId);
+```
+
+##### `sendSticker(threadId, stickerId)`
+Send a sticker to a thread by sticker ID.
+
+**Note:** Framework method - requires valid Instagram sticker IDs.
+
+```javascript
+await bot.sendSticker(threadId, '123456789');
+```
+
+##### `sendLink(threadId, linkUrl, linkText)`
+Send a link with optional preview text.
+
+```javascript
+await bot.sendLink(threadId, 'https://example.com', 'Check this out!');
+```
+
+##### `sendReaction(threadId, itemId, emoji)`
+React to a message with an emoji.
+
+```javascript
+await bot.sendReaction(threadId, itemId, '❤️');
+```
+
+##### `removeReaction(threadId, itemId)`
+Remove your reaction from a message.
+
+```javascript
+await bot.removeReaction(threadId, itemId);
+```
+
+##### `unsendMessage(threadId, itemId)`
+Delete a message you sent.
+
+```javascript
+await bot.unsendMessage(threadId, itemId);
+```
+
+##### `indicateTyping(threadId, isTyping)`
+Show typing indicator in a thread.
+
+```javascript
+// Start typing
+await bot.indicateTyping(threadId, true);
+
+// Stop typing
+await bot.indicateTyping(threadId, false);
+```
+
+### Thread Management Methods
+
+##### `muteThread(threadId)`
+Mute notifications for a thread.
+
+```javascript
+await bot.muteThread(threadId);
+```
+
+##### `unmuteThread(threadId)`
+Unmute notifications for a thread.
+
+```javascript
+await bot.unmuteThread(threadId);
+```
+
+##### `deleteThread(threadId)`
+Delete a thread.
+
+```javascript
+await bot.deleteThread(threadId);
+```
+
+##### `archiveThread(threadId)`
+Archive a thread.
+
+```javascript
+await bot.archiveThread(threadId);
+```
+
+##### `unarchiveThread(threadId)`
+Unarchive a thread.
+
+```javascript
+await bot.unarchiveThread(threadId);
+```
+
+##### `leaveThread(threadId)`
+Leave a group thread.
+
+```javascript
+await bot.leaveThread(threadId);
+```
+
+##### `addUsersToThread(threadId, userIds)`
+Add users to a group thread.
+
+```javascript
+await bot.addUsersToThread(threadId, ['123456', '789012']);
+```
+
+##### `removeUserFromThread(threadId, userId)`
+Remove a user from a group thread.
+
+```javascript
+await bot.removeUserFromThread(threadId, '123456');
+```
+
+##### `updateThreadTitle(threadId, title)`
+Update the title of a group thread.
+
+```javascript
+await bot.updateThreadTitle(threadId, 'New Group Name');
+```
+
 #### Event Handlers
 
 ##### `onMessage(callback)`
@@ -244,6 +467,15 @@ Listen for rate limit responses from Instagram (if any are returned by the serve
 ```javascript
 bot.onRateLimit((data) => {
   console.log(`Rate limited by Instagram server. Retry after ${data.retryAfter}s`);
+});
+```
+
+##### `onTyping(callback)`
+Detect when someone is typing in a thread.
+
+```javascript
+bot.onTyping((data) => {
+  console.log(`User ${data.userId} is typing in thread ${data.threadId}`);
 });
 ```
 
