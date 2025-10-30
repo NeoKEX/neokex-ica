@@ -40,9 +40,7 @@
   "files": [
     "src/",
     "README.md",
-    "LICENSE",
-    "IMPLEMENTATION_NOTES.md",
-    "RATE_LIMITING.md"
+    "LICENSE"
   ],
   "dependencies": {
     "axios": "^1.6.2",
