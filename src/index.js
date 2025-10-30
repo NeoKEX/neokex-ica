@@ -1,10 +1,18 @@
 import InstagramClient from './InstagramClient.js';
 import DirectMessage from './DirectMessage.js';
+import banner from './Banner.js';
+
+let bannerShown = false;
 
 class InstagramChatAPI extends InstagramClient {
-  constructor() {
+  constructor(options = {}) {
     super();
     this.dm = new DirectMessage(this);
+    
+    if (!bannerShown && options.showBanner !== false) {
+      banner.showSimple('1.0.0');
+      bannerShown = true;
+    }
   }
 
   async login(username, password) {
