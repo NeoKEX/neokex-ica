@@ -8,8 +8,15 @@
 **⚠️ DISCLAIMER**: This is an unofficial API that uses reverse-engineered Instagram endpoints. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. Use at your own risk.
 
 ## Recent Changes
-- **October 30, 2025**: Complete npm-ready package v1.0.0
-  - ✅ Created comprehensive API with 40 methods (comparable to ws3-fca)
+- **October 30, 2025**: Production-grade Instagram Chat API v1.1.0
+  - ✅ **Professional-grade login flow** with pre-login and comprehensive headers
+  - ✅ **Advanced error handling** (401, 429, 2FA detection, challenge detection)
+  - ✅ **Complete Instagram mobile app headers** (X-IG-Capabilities, X-IG-Connection-Type, etc.)
+  - ✅ **Payload signing utilities** (HMAC-SHA256 framework ready)
+  - ✅ **Enhanced session management** (all device IDs: phoneId, adId, waterfallId)
+  - ✅ **Improved cookie management** with proper extraction and merging
+  - ✅ Created comprehensive IMPLEMENTATION_NOTES.md with production guidance
+  - ✅ Comprehensive API with 40 methods (comparable to ws3-fca)
   - ✅ Implemented multiple message types (text, photo, video, voice, sticker)
   - ✅ Added typing indicators (send & detect)
   - ✅ Added reactions, unsend, thread management (mute, archive, delete, etc.)
@@ -17,9 +24,8 @@
   - ✅ Netscape cookie format support with CRLF handling
   - ✅ **ZERO client-side rate limiting** (confirmed - no request throttling)
   - ✅ Professional npm package configuration (package.json, LICENSE, .npmignore)
-  - ✅ Comprehensive documentation (README, IMPLEMENTATION_NOTES, RATE_LIMITING, PUBLISHING)
   - ✅ **Package ready for npm publishing**
-  - **Note**: This is an architectural framework. Instagram's private API requires advanced implementation (payload signing, media uploads) for production use. See IMPLEMENTATION_NOTES.md for details.
+  - **Note**: Cookie-based authentication is recommended for production. Username/password login works but signature key extraction from Instagram APK is needed for full reliability. See IMPLEMENTATION_NOTES.md for details.
 
 ## Project Architecture
 
