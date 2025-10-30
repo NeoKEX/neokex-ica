@@ -1,4 +1,5 @@
 import { generateUUID, sleep } from './utils.js';
+import logger from './Logger.js';
 
 export default class DirectMessage {
   constructor(client) {
@@ -103,11 +104,12 @@ export default class DirectMessage {
 
   async startPolling(interval = 5000) {
     if (this.isPolling) {
-      console.log('Already polling');
+      logger.warn('Polling already active');
       return;
     }
 
     this.isPolling = true;
+    logger.event(`Started message polling (interval: ${interval}ms)`);
     this.client.emit('polling:start');
 
     while (this.isPolling) {
@@ -122,6 +124,9 @@ export default class DirectMessage {
               if (latestItem.user_id !== this.client.userId) {
                 if (!this.lastSeqId || latestItem.timestamp > this.lastSeqId) {
                   this.lastSeqId = latestItem.timestamp;
+                  
+                  const username = thread.users?.find(u => u.pk === latestItem.user_id)?.username || latestItem.user_id;
+                  logger.message(username, latestItem.text || '[non-text message]');
                   
                   this.client.emit('message', {
                     threadId: thread.thread_id,
@@ -150,6 +155,7 @@ export default class DirectMessage {
 
         const pendingInbox = await this.getPendingInbox();
         if (pendingInbox.threads && pendingInbox.threads.length > 0) {
+          logger.event(`${pendingInbox.threads.length} pending message request(s)`);
           this.client.emit('pending_request', {
             threads: pendingInbox.threads,
           });
@@ -165,6 +171,7 @@ export default class DirectMessage {
 
   stopPolling() {
     this.isPolling = false;
+    logger.event('Stopped message polling');
     this.client.emit('polling:stop');
   }
 
