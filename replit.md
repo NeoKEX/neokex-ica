@@ -1,9 +1,9 @@
 # Instagram Chat API
 
 ## Overview
-**neokex-ica** is a pure API library package for Instagram chat/DM functionality. This package is designed to be imported and used by developers building Instagram bots - it provides only the API layer without any bot implementation.
+**neokex-ica** is a pure API library package for Instagram chat/DM functionality. This is a professional-grade library designed for npm distribution - providing only the API layer without any bot implementation.
 
-**Purpose**: A reusable library that other developers can install via npm/GitHub and use in their own Instagram bot projects.
+**Purpose**: A reusable npm package that developers can install and import into their own projects to build Instagram automation tools and bots. This library provides the foundation; developers build their own applications on top of it.
 
 **⚠️ DISCLAIMER**: This is an unofficial API that uses reverse-engineered Instagram endpoints. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. Use at your own risk.
 
@@ -44,15 +44,14 @@ neokex-ica/
 │   ├── Logger.js          # Professional logging utility with colors
 │   ├── Banner.js          # ASCII art banner utility
 │   └── utils.js           # Helper utilities
-├── README.md              # Complete API documentation
+├── README.md              # Complete API documentation (for npm)
 ├── IMPLEMENTATION_NOTES.md # Advanced implementation guide
 ├── RATE_LIMITING.md       # Zero rate limiting policy
 ├── PUBLISHING.md          # npm publishing guide
 ├── LICENSE                # MIT License
 ├── .npmignore             # npm package exclusions
-├── package.json           # npm package config (v1.0.0)
-├── verify.js              # Package verification script
-└── example.js             # Usage example with logging demo
+├── package.json           # npm package config (v1.1.0)
+└── verify.js              # Package verification script
 ```
 
 ### Key Components
@@ -67,15 +66,23 @@ neokex-ica/
 - `axios`: HTTP client for API requests
 - `eventemitter3`: Event handling for message listeners
 
-## User Preferences
-- **Pure API library package** (no bot implementation included)
-- **Designed for npm/GitHub distribution** - professional package ready to publish
-- **Professional presentation** - colored logging with timestamps and ASCII banner (44 methods)
-- Focus on chat/DM functionality for Instagram bots
-- Node.js implementation (ES6 modules)
-- Support for Netscape cookie format
-- **ZERO client-side rate limiting** (core requirement - confirmed implemented)
-- **Professional presentation** - colored logs and beautiful banner display
+## Vision & Philosophy
+
+### Core Principles
+- **Pure Library** - Only API functionality, zero bot implementation
+- **npm-First** - Professional package designed specifically for npm distribution
+- **Developer Tool** - Developers import this and build their own applications
+- **Professional Grade** - Production-ready with proper logging, error handling, and documentation
+- **Zero Opinions** - Library doesn't dictate how developers use it
+
+### Technical Standards
+- **Professional presentation** - Colored logging with timestamps and ASCII banner
+- **44 methods** - Comprehensive API coverage for Instagram automation
+- **Event-driven architecture** - Clean, reactive programming model
+- **Node.js ES6 modules** - Modern JavaScript standards
+- **Netscape cookie format** - Industry-standard authentication
+- **ZERO client-side rate limiting** - No artificial throttling (developers control their own rates)
+- **Complete documentation** - README.md for npm, implementation guides for advanced usage
 
 ## API Features (44 Methods Total)
 - **Authentication**: login, cookie management, session state
@@ -85,14 +92,28 @@ neokex-ica/
 - **Events**: onMessage, onTyping, onError, onLogin, onRateLimit, onPendingRequest
 - **Real-time**: Polling-based message listening with typing detection
 
-## Usage
-This is a library package designed to be installed and imported by other projects:
+## npm Publishing Status
+- ✅ Package structure properly configured
+- ✅ package.json configured with all metadata
+- ✅ .npmignore excludes development files
+- ✅ Professional README.md for npm page
+- ✅ MIT License included
+- ✅ All dependencies specified
+- ✅ ES6 module exports configured
+- 🚀 **Ready for: `npm publish`**
 
+## Library Usage (by developers who install this)
 ```javascript
 import InstagramChatAPI from 'neokex-ica';
-const bot = new InstagramChatAPI();
-bot.loadCookiesFromFile('./cookies.txt');
-// ... use the API in your own bot
+
+const api = new InstagramChatAPI();
+await api.loadCookiesFromFile('./cookies.txt');
+
+api.onMessage((msg) => {
+  // Developer builds their own logic here
+});
+
+await api.startListening();
 ```
 
 See README.md for complete API documentation.
