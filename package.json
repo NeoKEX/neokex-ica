@@ -1,22 +1,49 @@
 {
   "name": "neokex-ica",
   "version": "1.0.0",
-  "description": "Unofficial Instagram chat API for building bots",
+  "description": "Advanced unofficial Instagram Chat API for Node.js - Build professional Instagram bots with 40+ methods for messaging, threads, and user management",
   "main": "src/index.js",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "echo '⚠️  Make sure you have updated version number and tested the package'"
   },
   "keywords": [
     "instagram",
-    "chat",
-    "api",
-    "bot",
-    "dm",
-    "direct-message"
+    "instagram-api",
+    "instagram-bot",
+    "instagram-chat",
+    "instagram-dm",
+    "chat-api",
+    "direct-message",
+    "messaging",
+    "automation",
+    "neokex-ica",
+    "private-api",
+    "instagram-private-api"
   ],
-  "author": "",
+  "author": "Your Name <your.email@example.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/neokex-ica.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/neokex-ica/issues"
+  },
+  "homepage": "https://github.com/yourusername/neokex-ica#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE",
+    "IMPLEMENTATION_NOTES.md",
+    "RATE_LIMITING.md"
+  ],
   "dependencies": {
     "axios": "^1.6.2",
     "eventemitter3": "^5.0.1"

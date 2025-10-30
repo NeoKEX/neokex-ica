@@ -30,7 +30,7 @@
 - Username/password login
 - Cookie-based authentication (Netscape format)
 - Session state management (save/load)
-- No client-side rate limiting
+- **Zero client-side rate limiting** - requests are never throttled or delayed
 
 ### 💬 Messaging Capabilities
 - **Send text messages** to threads or users ✅
@@ -460,13 +460,14 @@ bot.onLogin((data) => {
 ```
 
 ##### `onRateLimit(callback)`
-Listen for rate limit responses from Instagram (if any are returned by the server).
+Listen for rate limit responses from Instagram's server.
 
-**Note:** The client does not enforce rate limiting, but Instagram's servers may still return rate limit errors. This event allows you to handle such cases.
+**Important:** This API has **ZERO client-side rate limiting**. All requests are sent immediately without any delays or throttling. This event only notifies you when Instagram's server returns a 429 (rate limit) response - it does NOT block or delay your requests.
 
 ```javascript
 bot.onRateLimit((data) => {
-  console.log(`Rate limited by Instagram server. Retry after ${data.retryAfter}s`);
+  console.log(`Instagram server returned rate limit. Retry after ${data.retryAfter}s`);
+  // Note: The API will NOT automatically delay requests - handle as needed
 });
 ```
 
@@ -558,9 +559,32 @@ await bot.login(
 );
 ```
 
+## Publishing to npm
+
+Before publishing, update `package.json` with your information:
+- `author`: Your name and email
+- `repository.url`: Your GitHub repository URL
+- `bugs.url`: Your GitHub issues URL
+- `homepage`: Your GitHub homepage URL
+
+Then publish to npm:
+
+```bash
+# Login to npm (one time only)
+npm login
+
+# Publish the package
+npm publish
+```
+
 ## Installation in Your Project
 
-Install from GitHub:
+Install from npm:
+```bash
+npm install neokex-ica
+```
+
+Or install from GitHub:
 ```bash
 npm install github:your-username/neokex-ica
 ```

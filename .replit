@@ -12,15 +12,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "api-info"
+args = "verify"
 
 [[workflows.workflow]]
-name = "api-info"
+name = "verify"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node test.js"
+args = "node verify.js"
 
 [workflows.workflow.metadata]
 outputType = "console"
