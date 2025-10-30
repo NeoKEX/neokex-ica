@@ -24,16 +24,16 @@
     "private-api",
     "instagram-private-api"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "NeoKEX <salneowaz@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/neokex-ica.git"
+    "url": "https://github.com/NeoKEX/neokex-ica.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/neokex-ica/issues"
+    "url": "https://github.com/NeoKEX/neokex-ica/issues"
   },
-  "homepage": "https://github.com/yourusername/neokex-ica#readme",
+  "homepage": "https://github.com/NeoKEX/neokex-ica#readme",
   "engines": {
     "node": ">=16.0.0"
   },
