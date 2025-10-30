@@ -3,7 +3,7 @@ import InstagramChatAPI from './src/index.js';
 console.log('===========================================');
 console.log('  neokex-ica: Instagram Chat API Library  ');
 console.log('===========================================');
-console.log('✅ Package ready for npm publishing!');
+console.log('✅ Package verified successfully!');
 console.log('\n📦 Package Information:');
 console.log('  - Name: neokex-ica');
 console.log('  - Version: 1.0.0');
@@ -17,9 +17,5 @@ const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(bot))
 
 console.log('  ' + methods.join(', '));
 
-console.log('\n📚 Publishing to npm:');
-console.log('  1. Update package.json with your details (author, repository)');
-console.log('  2. Run: npm login');
-console.log('  3. Run: npm publish');
 console.log('\n📖 Documentation: See README.md for complete API reference');
 console.log('===========================================');

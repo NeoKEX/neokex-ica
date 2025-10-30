@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "scripts": {
-    "prepublishOnly": "echo '⚠️  Make sure you have updated version number and tested the package'"
+    "test": "node verify.js"
   },
   "keywords": [
     "instagram",
