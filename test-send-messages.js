@@ -39,13 +39,43 @@ async function testSendMessages() {
     console.log('─'.repeat(70));
     console.log(`🔍 Searching for @${recipientUsername}...`);
     
-    const userInfo = await bot.getUserInfoByUsername(recipientUsername);
+    // Try search first (more flexible)
+    let userInfo = null;
+    let recipientUserId = null;
+    
+    try {
+      const searchResults = await bot.searchUsers(recipientUsername);
+      if (searchResults && searchResults.length > 0) {
+        // Look for exact match first
+        userInfo = searchResults.find(u => u.username.toLowerCase() === recipientUsername.toLowerCase());
+        
+        // If no exact match, use the first result
+        if (!userInfo) {
+          userInfo = searchResults[0];
+          console.log(`   ℹ️  Exact match not found, using closest match`);
+        }
+      }
+    } catch (error) {
+      console.log(`   ⚠️  Search failed: ${error.message}`);
+    }
+    
+    // If search didn't work, try direct lookup
+    if (!userInfo) {
+      try {
+        userInfo = await bot.getUserInfoByUsername(recipientUsername);
+      } catch (error) {
+        console.error(`❌ User @${recipientUsername} not found!`);
+        console.log(`   Error: ${error.message}`);
+        process.exit(1);
+      }
+    }
+    
     if (!userInfo) {
       console.error(`❌ User @${recipientUsername} not found!`);
       process.exit(1);
     }
     
-    const recipientUserId = userInfo.pk.toString();
+    recipientUserId = userInfo.pk.toString();
     console.log(`✅ Found: @${userInfo.username}`);
     console.log(`   Name: ${userInfo.full_name || 'N/A'}`);
     console.log(`   User ID: ${recipientUserId}`);
