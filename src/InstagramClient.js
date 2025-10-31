@@ -34,8 +34,10 @@ export default class InstagramClient extends EventEmitter {
     this.bloksVersionId = '388ece79ebc0e70e87873505ed1b0ff335ae2868a978cc951b6721c41d46a30a';
     this.fbAnalyticsApplicationId = '567067343352427';
     
-    // Real Instagram signature key extracted from Instagram APK
-    this.SIGNATURE_KEY = '9193488027538fd3450b83b7d05286d4ca9599a0f7eeed90d8c85925698a05dc';
+    // Instagram signature key - Load from environment or use extracted key
+    // WARNING: This key is extracted from Instagram APK and may change
+    // Set INSTAGRAM_SIGNATURE_KEY environment variable to use your own
+    this.SIGNATURE_KEY = process.env.INSTAGRAM_SIGNATURE_KEY || '9193488027538fd3450b83b7d05286d4ca9599a0f7eeed90d8c85925698a05dc';
     this.BREADCRUMB_KEY = 'iN4$aGr0m';
   }
 

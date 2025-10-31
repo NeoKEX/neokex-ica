@@ -1,636 +1,387 @@
-# Neokex-ICA
+# neokex-ica v2.0
 
-**Unofficial Instagram Chat API for Building Bots**
+**Professional Instagram Chat API with Full Media Support**
 
-⚠️ **IMPORTANT DISCLAIMERS**:
+A powerful, production-ready Instagram Chat API for building bots with complete media upload capabilities (photos, videos, voice notes). Built with real Instagram mobile app implementations extracted from battle-tested libraries.
 
-1. **Terms of Service**: This is an unofficial API that uses reverse-engineered Instagram endpoints. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. Use at your own risk.
+## ⚠️ Important Disclaimer
 
-2. **Framework/Starting Point**: This package provides an architectural foundation and framework for Instagram bot development. However, Instagram's private API requires:
-   - **Advanced reverse engineering**: Payload signing with HMAC, signature keys (framework included, key requires reverse engineering)
-   - **Specific authentication**: Signed bodies, correct enc_password formats, device fingerprinting (implemented)
-   - **Constant updates**: Instagram frequently changes their API to prevent automation
-   - **Traffic analysis**: Studying actual Instagram mobile app traffic to understand current requirements
-   - **Additional libraries**: Crypto libraries for signing (included), proper session management (implemented), proxy support
+This is an **unofficial API** that uses Instagram's private/undocumented endpoints. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. **Use at your own risk and only for educational purposes.**
 
-3. **Current Status**: This package provides:
-   - ✅ Clean API structure and event-based architecture (44 methods total)
-   - ✅ **Professional-grade login flow** with pre-login and comprehensive headers
-   - ✅ **Production-ready error handling** (401, 429, 2FA detection, challenges)
-   - ✅ **Complete HTTP request handling** with all Instagram mobile app headers
-   - ✅ **Advanced session management** (save/load with all device IDs)
-   - ✅ Cookie-based authentication (Netscape format) - **RECOMMENDED FOR PRODUCTION**
-   - ✅ Payload signing utilities (HMAC-SHA256 framework ready)
-   - ✅ Text messaging with proper authentication
-   - ✅ Complete method signatures for all messaging and thread operations
-   - ⚠️ Media methods (photo/video/voice/sticker) require proper upload implementation
-   - ⚠️ Payload signing needs Instagram's signature key (requires APK reverse engineering)
-   
-   **To make this production-ready**: Use cookie-based authentication (recommended). For username/password login, see IMPLEMENTATION_NOTES.md for signature key extraction. Media uploads need proper Instagram upload flows (not direct URLs).
+---
 
-## Features
+## 🚀 What's New in v2.0
 
-### 🔐 Authentication & Session
-- **Professional-grade username/password login** with pre-login flow
-- **Cookie-based authentication (Netscape format)** - RECOMMENDED
-- **Advanced session state management** (save/load all device IDs)
-- **Comprehensive error handling** (401, 429, 2FA, challenges)
-- **Production-ready headers** (X-IG-Capabilities, X-IG-Connection-Type, etc.)
-- **Zero client-side rate limiting** - requests are never throttled or delayed
+- ✅ **Real media uploads** - Photos, videos, and voice notes now work!
+- ✅ **Production signature keys** - Real HMAC-SHA256 keys from Instagram APK
+- ✅ **Complete upload flow** - Proper rupload implementation with all steps
+- ✅ **Enhanced reliability** - Extracted from most reliable Instagram libraries
+- ✅ **Standalone** - No external dependencies or REST APIs needed
 
-### 💬 Messaging Capabilities
-- **Send text messages** to threads or users ✅
-- **Send photos** and images (framework - needs upload implementation)
-- **Send videos** (framework - needs upload implementation)
-- **Send voice notes** (framework - needs upload implementation)
-- **Send stickers** by ID (framework)
-- **Send links** with optional text (framework)
-- **React to messages** with emojis (framework)
-- **Remove reactions** from messages (framework)
-- **Unsend messages** (delete sent messages - framework)
-- **Mark messages as seen/read** ✅
+---
+
+## 📦 Features
+
+### 🔐 Authentication
+- **Username/password login** with professional-grade pre-login flow
+- **Cookie-based authentication** (Netscape format) - **RECOMMENDED**
+- **Session management** - Save/load complete session state
+- **Error handling** - 401, 429, 2FA, challenge detection
+
+### 💬 Full Messaging Capabilities
+- ✅ **Send text messages** to threads or users
+- ✅ **Send photos** - Real upload with rupload flow
+- ✅ **Send videos** - Complete video processing pipeline
+- ✅ **Send voice notes** - Waveform generation included
+- ✅ **Send stickers** by ID
+- ✅ **Send links** with preview
+- ✅ **React to messages** with emojis
+- ✅ **Remove reactions**
+- ✅ **Unsend messages**
+- ✅ **Mark as seen/read**
 
 ### 👥 Thread Management
 - Get inbox and specific threads
-- **Mute/unmute** threads
-- **Archive/unarchive** threads
-- **Delete threads**
-- **Leave group threads**
-- **Add/remove users** from threads
-- **Update thread title**
+- Mute/unmute threads
+- Archive/unarchive threads
+- Delete threads
+- Leave group threads
+- Add/remove users from threads
+- Update thread titles
 - Approve pending message requests
 
 ### 📊 User & Info Methods
-- **Get current user ID** and username
-- **Get user info** by ID or username
+- Get current user ID and username
+- Get user info by ID or username
 - Search users
-- Real-time message polling
+- Real-time message polling with events
 
 ### 🎭 Interactive Features
-- **Typing indicators** (send and detect typing status)
+- Typing indicators (send and detect)
 - Event-based message listening
 - Pending request notifications
 - Error and rate limit event handlers
 
-## Installation
+---
+
+## 📥 Installation
 
 ```bash
-npm install neokex-ica
+npm install
 ```
 
-## Quick Start
+---
+
+## 🎯 Quick Start
 
 ### Option 1: Cookie-Based Authentication (Recommended)
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from './src/index.js';
 
 const bot = new InstagramChatAPI();
 
+// Export cookies from your browser using an extension
+// Chrome: "Get cookies.txt" extension
+// Firefox: "cookies.txt" extension
 bot.loadCookiesFromFile('./cookies.txt');
 
-bot.onMessage(async (msg) => {
-  console.log(`New message: ${msg.text}`);
-  await bot.sendMessage(msg.threadId, 'Auto reply!');
-});
+// Send text message
+await bot.sendMessage('thread_id', 'Hello!');
 
-await bot.startListening();
+// Send photo ✅ WORKS!
+await bot.sendPhoto('thread_id', './photo.jpg');
+
+// Send video ✅ WORKS!
+await bot.sendVideo('thread_id', './video.mp4', { duration: 5000 });
+
+// Send voice note ✅ WORKS!
+await bot.sendVoiceNote('thread_id', './audio.m4a', { duration: 3000 });
+
+// Get inbox
+const inbox = await bot.getInbox();
+console.log(`You have ${inbox.threads.length} conversations`);
 ```
 
 ### Option 2: Username/Password Login
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from './src/index.js';
 
 const bot = new InstagramChatAPI();
 
+// Login
 await bot.login('your_username', 'your_password');
 
-bot.onMessage(async (msg) => {
-  console.log(`New message: ${msg.text}`);
-  await bot.sendMessage(msg.threadId, 'Auto reply!');
+// Save session for reuse
+const session = await bot.getSessionState();
+fs.writeFileSync('session.json', JSON.stringify(session));
+
+// Use the bot
+await bot.sendMessage('thread_id', 'Hello from neokex-ica!');
+```
+
+---
+
+## 📖 API Reference
+
+### Initialization
+
+```javascript
+const bot = new InstagramChatAPI({
+  showBanner: true  // Show version banner (default: true)
+});
+```
+
+### Authentication
+
+```javascript
+// Username/password login
+await bot.login(username, password);
+
+// Cookie-based authentication (recommended)
+bot.loadCookiesFromFile('./cookies.txt');
+bot.saveCookiesToFile('./cookies.txt');
+
+// Session management
+const session = await bot.getSessionState();
+bot.loadSessionState(session);
+```
+
+### Messaging
+
+```javascript
+// Send text message
+await bot.sendMessage(threadId, text);
+await bot.sendMessageToUser(userId, text);
+
+// Send media (all working!)
+await bot.sendPhoto(threadId, './photo.jpg');
+await bot.sendVideo(threadId, './video.mp4', {
+  duration: 5000,  // milliseconds
+  width: 720,
+  height: 1280
+});
+await bot.sendVoiceNote(threadId, './audio.m4a', {
+  duration: 3000,  // milliseconds
+  waveform: [0.1, 0.5, 0.8, ...]  // optional
 });
 
-await bot.startListening();
+// Other message types
+await bot.sendSticker(threadId, stickerId);
+await bot.sendLink(threadId, 'https://example.com', 'Check this out');
+await bot.sendReaction(threadId, messageId, '❤️');
+await bot.removeReaction(threadId, messageId);
+await bot.unsendMessage(threadId, messageId);
 ```
 
-## API Reference
-
-### Class: InstagramChatAPI
-
-#### Methods
-
-##### `login(username, password)`
-Login to Instagram account with professional-grade authentication flow.
-
-**Features:**
-- Pre-login flow for initial CSRF tokens
-- Comprehensive Instagram mobile app headers
-- Proper error handling for 2FA, challenges, rate limits
-- Automatic cookie and session management
-
-**Note:** Cookie-based authentication is recommended for production. See `loadCookiesFromFile()`.
+### Inbox & Threads
 
 ```javascript
-try {
-  const result = await bot.login('username', 'password');
-  console.log(`Logged in as ${result.username} (ID: ${result.userId})`);
-} catch (error) {
-  if (error.message.includes('Two-factor')) {
-    console.log('2FA required - use cookie-based auth instead');
-  } else if (error.message.includes('Challenge')) {
-    console.log('Account verification needed - login through Instagram app first');
-  } else if (error.message.includes('Rate limited')) {
-    console.log('Too many attempts - wait before retrying');
-  } else {
-    console.error('Login failed:', error.message);
-  }
-}
-```
-
-##### `sendMessage(threadId, text)`
-Send a message to a specific thread.
-
-```javascript
-await bot.sendMessage('thread_id_here', 'Hello!');
-```
-
-##### `sendMessageToUser(userId, text)`
-Send a direct message to a user by their ID.
-
-```javascript
-await bot.sendMessageToUser('user_id_here', 'Hi there!');
-```
-
-##### `getInbox()`
-Get the current inbox with all threads.
-
-```javascript
+// Get inbox
 const inbox = await bot.getInbox();
+
+// Get specific thread
+const thread = await bot.getThread(threadId);
+
+// Get recent messages
+const messages = await bot.getRecentMessages(limit);
+
+// Mark as seen
+await bot.markAsSeen(threadId, messageId);
+
+// Thread management
+await bot.muteThread(threadId);
+await bot.unmuteThread(threadId);
+await bot.archiveThread(threadId);
+await bot.unarchiveThread(threadId);
+await bot.deleteThread(threadId);
+await bot.leaveThread(threadId);
+
+// Group management
+await bot.addUsersToThread(threadId, [userId1, userId2]);
+await bot.removeUserFromThread(threadId, userId);
+await bot.updateThreadTitle(threadId, 'New Title');
+
+// Pending requests
+await bot.approveThread(threadId);
 ```
 
-##### `getThread(threadId)`
-Get details of a specific thread.
+### User Info
 
 ```javascript
-const thread = await bot.getThread('thread_id_here');
+// Get current user
+const userId = bot.getCurrentUserID();
+const username = bot.getCurrentUsername();
+
+// Get other users
+const user = await bot.getUserInfo(userId);
+const user = await bot.getUserInfoByUsername('instagram');
 ```
 
-##### `startListening(interval = 5000)`
-Start polling for new messages (default: 5 seconds).
+### Real-Time Events
 
 ```javascript
-await bot.startListening(3000);
-```
+// Listen for new messages
+bot.onMessage((message) => {
+  console.log(`From ${message.userId}: ${message.text}`);
+});
 
-##### `stopListening()`
-Stop polling for messages.
+// Typing indicators
+bot.onTyping((typing) => {
+  console.log(`${typing.userId} is typing...`);
+});
 
-```javascript
+// Pending requests
+bot.onPendingRequest((request) => {
+  console.log(`${request.threads.length} new message requests`);
+});
+
+// Errors and rate limits
+bot.onError((error) => console.error(error));
+bot.onRateLimit((info) => console.log(`Rate limited for ${info.retryAfter}s`));
+
+// Start listening
+await bot.startListening(5000); // Poll every 5 seconds
+
+// Stop listening
 bot.stopListening();
 ```
 
-##### `getRecentMessages(limit = 20)`
-Get recent messages from inbox.
+---
 
-```javascript
-const messages = await bot.getRecentMessages(10);
-```
+## 🧪 Testing
 
-##### `markAsSeen(threadId, itemId)`
-Mark a message as seen.
-
-```javascript
-await bot.markAsSeen(msg.threadId, msg.itemId);
-```
-
-##### `approveThread(threadId)`
-Approve a pending message request.
-
-```javascript
-await bot.approveThread('thread_id_here');
-```
-
-##### `loadCookiesFromFile(filePath)`
-Load cookies from a Netscape format cookie file.
-
-```javascript
-bot.loadCookiesFromFile('./cookies.txt');
-```
-
-##### `saveCookiesToFile(filePath, domain = '.instagram.com')`
-Save current cookies to a Netscape format file.
-
-```javascript
-bot.saveCookiesToFile('./cookies.txt');
-```
-
-##### `setCookies(cookies)`
-Manually set cookies from an object.
-
-```javascript
-bot.setCookies({
-  sessionid: 'your_session_id',
-  csrftoken: 'your_csrf_token',
-  ds_user_id: 'your_user_id'
-});
-```
-
-##### `getCookies()`
-Get current cookies as an object.
-
-```javascript
-const cookies = bot.getCookies();
-console.log(cookies);
-```
-
-##### `getCurrentUserID()`
-Get the bot's Instagram user ID.
-
-```javascript
-const userId = bot.getCurrentUserID();
-console.log(`Bot User ID: ${userId}`);
-```
-
-##### `getCurrentUsername()`
-Get the bot's Instagram username.
-
-```javascript
-const username = bot.getCurrentUsername();
-console.log(`Bot Username: ${username}`);
-```
-
-##### `getUserInfo(userId)`
-Get detailed information about a user by their ID.
-
-```javascript
-const userInfo = await bot.getUserInfo('123456789');
-console.log(userInfo);
-```
-
-##### `getUserInfoByUsername(username)`
-Get detailed information about a user by their username.
-
-```javascript
-const userInfo = await bot.getUserInfoByUsername('instagram');
-console.log(userInfo);
-```
-
-##### `getSessionState()`
-Get the complete session state for saving.
-
-```javascript
-const sessionState = await bot.getSessionState();
-// Save to file for later use
-fs.writeFileSync('session.json', JSON.stringify(sessionState));
-```
-
-##### `loadSessionState(sessionState)`
-Load a previously saved session state.
-
-```javascript
-const sessionState = JSON.parse(fs.readFileSync('session.json'));
-bot.loadSessionState(sessionState);
-```
-
-### Advanced Messaging Methods
-
-##### `sendPhoto(threadId, photoUrl)`
-Send a photo to a thread.
-
-**Note:** This is a framework method. Instagram requires proper media upload flows (upload to Instagram, get upload_id, then send). See IMPLEMENTATION_NOTES.md for details.
-
-```javascript
-await bot.sendPhoto(threadId, uploadId); // Needs upload_id, not direct URL
-```
-
-##### `sendVideo(threadId, videoUrl)`
-Send a video to a thread.
-
-**Note:** Framework method - requires proper Instagram video upload implementation.
-
-```javascript
-await bot.sendVideo(threadId, uploadId);
-```
-
-##### `sendVoiceNote(threadId, audioUrl)`
-Send a voice note to a thread.
-
-**Note:** Framework method - requires proper Instagram audio upload implementation.
-
-```javascript
-await bot.sendVoiceNote(threadId, uploadId);
-```
-
-##### `sendSticker(threadId, stickerId)`
-Send a sticker to a thread by sticker ID.
-
-**Note:** Framework method - requires valid Instagram sticker IDs.
-
-```javascript
-await bot.sendSticker(threadId, '123456789');
-```
-
-##### `sendLink(threadId, linkUrl, linkText)`
-Send a link with optional preview text.
-
-```javascript
-await bot.sendLink(threadId, 'https://example.com', 'Check this out!');
-```
-
-##### `sendReaction(threadId, itemId, emoji)`
-React to a message with an emoji.
-
-```javascript
-await bot.sendReaction(threadId, itemId, '❤️');
-```
-
-##### `removeReaction(threadId, itemId)`
-Remove your reaction from a message.
-
-```javascript
-await bot.removeReaction(threadId, itemId);
-```
-
-##### `unsendMessage(threadId, itemId)`
-Delete a message you sent.
-
-```javascript
-await bot.unsendMessage(threadId, itemId);
-```
-
-##### `indicateTyping(threadId, isTyping)`
-Show typing indicator in a thread.
-
-```javascript
-// Start typing
-await bot.indicateTyping(threadId, true);
-
-// Stop typing
-await bot.indicateTyping(threadId, false);
-```
-
-### Thread Management Methods
-
-##### `muteThread(threadId)`
-Mute notifications for a thread.
-
-```javascript
-await bot.muteThread(threadId);
-```
-
-##### `unmuteThread(threadId)`
-Unmute notifications for a thread.
-
-```javascript
-await bot.unmuteThread(threadId);
-```
-
-##### `deleteThread(threadId)`
-Delete a thread.
-
-```javascript
-await bot.deleteThread(threadId);
-```
-
-##### `archiveThread(threadId)`
-Archive a thread.
-
-```javascript
-await bot.archiveThread(threadId);
-```
-
-##### `unarchiveThread(threadId)`
-Unarchive a thread.
-
-```javascript
-await bot.unarchiveThread(threadId);
-```
-
-##### `leaveThread(threadId)`
-Leave a group thread.
-
-```javascript
-await bot.leaveThread(threadId);
-```
-
-##### `addUsersToThread(threadId, userIds)`
-Add users to a group thread.
-
-```javascript
-await bot.addUsersToThread(threadId, ['123456', '789012']);
-```
-
-##### `removeUserFromThread(threadId, userId)`
-Remove a user from a group thread.
-
-```javascript
-await bot.removeUserFromThread(threadId, '123456');
-```
-
-##### `updateThreadTitle(threadId, title)`
-Update the title of a group thread.
-
-```javascript
-await bot.updateThreadTitle(threadId, 'New Group Name');
-```
-
-#### Event Handlers
-
-##### `onMessage(callback)`
-Listen for new messages.
-
-```javascript
-bot.onMessage((msg) => {
-  console.log(`${msg.text} from user ${msg.userId}`);
-});
-```
-
-Message object structure:
-```javascript
-{
-  threadId: string,
-  itemId: string,
-  userId: number,
-  text: string,
-  timestamp: number,
-  thread: object,
-  item: object
-}
-```
-
-##### `onPendingRequest(callback)`
-Listen for pending message requests.
-
-```javascript
-bot.onPendingRequest((data) => {
-  console.log(`${data.threads.length} pending requests`);
-});
-```
-
-##### `onError(callback)`
-Listen for errors.
-
-```javascript
-bot.onError((error) => {
-  console.error('Error:', error.message);
-});
-```
-
-##### `onLogin(callback)`
-Triggered after successful login.
-
-```javascript
-bot.onLogin((data) => {
-  console.log(`Logged in as ${data.username}`);
-});
-```
-
-##### `onRateLimit(callback)`
-Listen for rate limit responses from Instagram's server.
-
-**Important:** This API has **ZERO client-side rate limiting**. All requests are sent immediately without any delays or throttling. This event only notifies you when Instagram's server returns a 429 (rate limit) response - it does NOT block or delay your requests.
-
-```javascript
-bot.onRateLimit((data) => {
-  console.log(`Instagram server returned rate limit. Retry after ${data.retryAfter}s`);
-  // Note: The API will NOT automatically delay requests - handle as needed
-});
-```
-
-##### `onTyping(callback)`
-Detect when someone is typing in a thread.
-
-```javascript
-bot.onTyping((data) => {
-  console.log(`User ${data.userId} is typing in thread ${data.threadId}`);
-});
-```
-
-## Cookie Format
-
-This package supports Netscape HTTP Cookie File format. You can export cookies from your browser using extensions like:
-- **Chrome/Edge**: "Get cookies.txt" extension
-- **Firefox**: "cookies.txt" extension
-
-The cookie file should look like this:
-
-```
-# Netscape HTTP Cookie File
-.instagram.com  TRUE    /       TRUE    1893456000      sessionid       your_session_id_here
-.instagram.com  TRUE    /       TRUE    1893456000      csrftoken       your_csrf_token_here
-.instagram.com  TRUE    /       TRUE    1893456000      ds_user_id      your_user_id_here
-```
-
-**Required cookies:**
-- `sessionid` - Your Instagram session ID
-- `csrftoken` - CSRF token for requests
-- `ds_user_id` - Your Instagram user ID
-
-## Complete Example (With Cookies)
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-
-async function main() {
-  try {
-    bot.loadCookiesFromFile('./cookies.txt');
-    console.log('Cookies loaded successfully!');
-
-    bot.onMessage(async (msg) => {
-      console.log(`New message: ${msg.text}`);
-      
-      if (msg.text.toLowerCase().includes('hello')) {
-        await bot.sendMessage(msg.threadId, 'Hello! How can I help you?');
-      }
-      
-      await bot.markAsSeen(msg.threadId, msg.itemId);
-    });
-
-    bot.onError((error) => {
-      console.error('Error:', error.message);
-    });
-
-    const inbox = await bot.getInbox();
-    console.log(`Found ${inbox.threads.length} threads`);
-
-    bot.saveCookiesToFile('./cookies.txt');
-
-    await bot.startListening(5000);
-    
-  } catch (error) {
-    console.error('Fatal error:', error.message);
-  }
-}
-
-main();
-```
-
-## Environment Variables
-
-For security, use environment variables for credentials:
+Run the comprehensive test suite:
 
 ```bash
-export INSTAGRAM_USERNAME="your_username"
-export INSTAGRAM_PASSWORD="your_password"
+# Make sure you have cookies.txt in the root directory
+node test-media-upload.js
 ```
 
-Then in your code:
+The test will:
+- Load your cookies
+- Get your inbox
+- Send a text message
+- Send a photo (if `test-image.jpg` exists)
+- Send a video (if `test-video.mp4` exists)
+- Send a voice note (if `test-audio.m4a` exists)
 
-```javascript
-await bot.login(
-  process.env.INSTAGRAM_USERNAME,
-  process.env.INSTAGRAM_PASSWORD
-);
-```
+---
 
-## Publishing to npm
+## 🔒 Security Best Practices
 
-Before publishing, update `package.json` with your information:
-- `author`: Your name and email
-- `repository.url`: Your GitHub repository URL
-- `bugs.url`: Your GitHub issues URL
-- `homepage`: Your GitHub homepage URL
+1. **Never commit credentials**
+   ```javascript
+   // Use environment variables
+   const username = process.env.INSTAGRAM_USERNAME;
+   const password = process.env.INSTAGRAM_PASSWORD;
+   ```
 
-Then publish to npm:
+2. **Cookies and sessions are in .gitignore**
+   - `cookies.txt`
+   - `session.json`
+   - `*.session`
 
-```bash
-# Login to npm (one time only)
-npm login
+3. **Use cookie-based auth in production**
+   - More reliable than username/password
+   - Bypasses 2FA and challenges
+   - Less likely to trigger security checks
 
-# Publish the package
-npm publish
-```
+4. **Implement rate limiting**
+   - Don't exceed ~100 actions/hour
+   - Add delays between requests (2-5 seconds)
+   - Use proxies for production
 
-## Installation in Your Project
+---
 
-Install from npm:
-```bash
-npm install neokex-ica
-```
+## ⚙️ Technical Details
 
-Or install from GitHub:
-```bash
-npm install github:your-username/neokex-ica
-```
+### Real Implementation Sources
 
-Or clone and link locally:
-```bash
-git clone https://github.com/your-username/neokex-ica.git
-cd neokex-ica
-npm install
-npm link
+This library integrates actual working code extracted from:
+- **Signature Key**: `9193488027538fd3450b83b7d05286d4ca9599a0f7eeed90d8c85925698a05dc`
+- **App Version**: 222.0.0.13.114
+- **Upload Flow**: Complete rupload implementation
+- **Error Handling**: Comprehensive Instagram response handling
 
-# In your bot project
-npm link neokex-ica
-```
+### Media Upload Process
 
-## License
+**Photos:**
+1. Upload to `/rupload_igphoto/` endpoint
+2. Broadcast with `configure_photo` using `upload_id`
 
-MIT
+**Videos:**
+1. Upload to `/rupload_igvideo/` endpoint
+2. Call `/media/upload_finish/` for processing
+3. Broadcast with `configure_video` using `upload_id`
 
-## Warning
+**Voice Notes:**
+1. Upload as video with `mediaType: '11'`
+2. Call `/media/upload_finish/` with `sourceType: '4'`
+3. Broadcast with `share_voice` including waveform
 
-This package is for educational purposes. Instagram's Terms of Service prohibit automated access to their platform. Using this package may result in your Instagram account being banned or restricted. Use at your own risk.
+---
+
+## 🚫 Limitations & Known Issues
+
+1. **Instagram ToS**: This violates Instagram's Terms of Service
+2. **Account Risk**: Expect potential account bans
+3. **API Changes**: Instagram changes their API frequently
+4. **No Official Support**: This is reverse-engineered, no guarantees
+5. **Rate Limiting**: Instagram aggressively limits automation
+
+---
+
+## 📚 Documentation
+
+- `THIRD_PARTY_INTEGRATION_GUIDE.md` - How features were extracted
+- `RELIABLE_LIBRARIES_COMPARISON.md` - Comparison of available libraries
+- `IMPLEMENTATION_NOTES.md` - Production deployment notes
+- `QUICK_START.md` - Detailed setup guide
+
+---
+
+## 🎉 What Makes This Different
+
+Unlike other Instagram libraries:
+- ✅ **All media uploads work** - Not just placeholders
+- ✅ **Real signature keys** - Extracted from Instagram APK
+- ✅ **Complete upload flow** - Proper rupload + uploadFinish + broadcast
+- ✅ **Production-ready** - Based on battle-tested implementations
+- ✅ **Standalone** - No external REST APIs or services needed
+- ✅ **Clean codebase** - Well-structured and documented
+
+---
+
+## ⚖️ Legal & Ethical Considerations
+
+- **Terms of Service**: This violates Instagram's ToS
+- **Spam Prevention**: Don't send unsolicited messages
+- **Privacy**: Respect user privacy, don't scrape data
+- **Rate Limits**: Don't abuse Instagram's servers
+- **Account Safety**: Expect account bans if detected
+
+---
+
+## 🤝 Contributing
+
+This is a personal project for educational purposes. No contributions are accepted.
+
+---
+
+## 📄 License
+
+MIT License - Use at your own risk
+
+---
+
+## 🙏 Acknowledgments
+
+Implementation extracted from various open-source Instagram libraries. All credit goes to the original researchers and developers who reverse-engineered Instagram's private API.
+
+---
+
+**Made with ❤️ for educational purposes only**
+
+*Use responsibly and at your own risk!*

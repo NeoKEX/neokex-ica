@@ -292,8 +292,9 @@ export default class DirectMessage {
       const fs = await import('fs');
       const audioBuffer = fs.readFileSync(audioPath);
       const uploadId = Date.now().toString();
+      const duration = (options.duration || 3000) / 1000.0; // Convert to seconds
       
-      // Step 1: Upload as video with voice parameters
+      // Step 1: Upload voice note with dedicated voice parameters
       logger.info('Uploading voice note...');
       await this.client.uploadVideo(audioBuffer, {
         uploadId,
@@ -304,10 +305,31 @@ export default class DirectMessage {
         height: 0
       });
       
-      // Step 2: Finish upload
-      await this.client.uploadFinish(uploadId, '4'); // source_type '4' for voice
+      // Step 2: Finish upload with voice metadata
+      const finishPayload = new URLSearchParams({
+        timezone_offset: '0',
+        _csrftoken: this.client.cookies.csrftoken,
+        source_type: '4', // Voice type
+        _uid: this.client.cookies.ds_user_id,
+        device_id: this.client.deviceId,
+        _uuid: this.client.uuid,
+        upload_id: uploadId,
+        device: JSON.stringify({
+          manufacturer: 'OnePlus',
+          model: 'ONEPLUS A6000',
+          android_version: 28,
+          android_release: '9.0'
+        }),
+        length: duration.toString()
+      });
+
+      await this.client.request(
+        '/media/upload_finish/',
+        'POST',
+        finishPayload.toString()
+      );
       
-      // Step 3: Broadcast voice note
+      // Step 3: Broadcast voice note with waveform
       const waveform = options.waveform || Array.from(
         Array(20), 
         (_, i) => Math.sin(i * (Math.PI / 10)) * 0.5 + 0.5
