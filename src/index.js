@@ -1,13 +1,13 @@
-import InstagramClient from './InstagramClient.js';
-import DirectMessage from './DirectMessage.js';
+import InstagramClientV2 from './InstagramClientV2.js';
+import DirectMessageV2 from './DirectMessageV2.js';
 import banner from './Banner.js';
 
 let bannerShown = false;
 
-class InstagramChatAPI extends InstagramClient {
+class InstagramChatAPI extends InstagramClientV2 {
   constructor(options = {}) {
     super();
-    this.dm = new DirectMessage(this);
+    this.dm = new DirectMessageV2(this);
     
     if (!bannerShown && options.showBanner !== false) {
       banner.showSimple('2.0.0');
@@ -190,6 +190,70 @@ class InstagramChatAPI extends InstagramClient {
 
   loadSessionState(sessionState) {
     return super.loadSessionState(sessionState);
+  }
+
+  async uploadPhoto(photoPath, caption = '') {
+    return await super.uploadPhoto(photoPath, caption);
+  }
+
+  async uploadVideo(videoPath, caption = '', coverPath = null) {
+    return await super.uploadVideo(videoPath, caption, coverPath);
+  }
+
+  async uploadStory(photoPath, options = {}) {
+    return await super.uploadStory(photoPath, options);
+  }
+
+  async getUserFeed(userId, maxItems = 30) {
+    return await super.getUserFeed(userId, maxItems);
+  }
+
+  async getTimelineFeed(maxItems = 30) {
+    return await super.getTimelineFeed(maxItems);
+  }
+
+  async likePost(mediaId) {
+    return await super.likePost(mediaId);
+  }
+
+  async unlikePost(mediaId) {
+    return await super.unlikePost(mediaId);
+  }
+
+  async commentPost(mediaId, text) {
+    return await super.commentPost(mediaId, text);
+  }
+
+  async followUser(userId) {
+    return await super.followUser(userId);
+  }
+
+  async unfollowUser(userId) {
+    return await super.unfollowUser(userId);
+  }
+
+  async getFollowers(userId, maxItems = 100) {
+    return await super.getFollowers(userId, maxItems);
+  }
+
+  async getFollowing(userId, maxItems = 100) {
+    return await super.getFollowing(userId, maxItems);
+  }
+
+  async getMediaInfo(mediaId) {
+    return await super.getMediaInfo(mediaId);
+  }
+
+  async deletePost(mediaId) {
+    return await super.deletePost(mediaId);
+  }
+
+  async searchUsers(query) {
+    return await super.searchUsers(query);
+  }
+
+  getIgClient() {
+    return super.getIgClient();
   }
 }
 
