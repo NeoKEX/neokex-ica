@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  instagrapi:
+    image: subzeroid/instagrapi-rest:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - WORKERS=1
+    volumes:
+      - ./sessions:/app/sessions
+    restart: unless-stopped

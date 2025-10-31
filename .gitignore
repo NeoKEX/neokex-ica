@@ -4,3 +4,6 @@ npm-debug.log*
 .DS_Store
 .env
 session.json
+cookies.txt
+sessions/
+*.session
