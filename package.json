@@ -43,7 +43,8 @@
   "files": [
     "src/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "EXAMPLES.md"
   ],
   "dependencies": {
     "axios": "^1.6.2",
