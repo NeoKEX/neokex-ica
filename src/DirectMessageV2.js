@@ -11,6 +11,8 @@ export default class DirectMessageV2 {
     this.inbox = null;
     this.lastSeqId = 0;
     this.isPolling = false;
+    this.seenMessageIds = new Set();
+    this.replyHandlers = new Map();
   }
 
   async getInbox() {
@@ -56,10 +58,24 @@ export default class DirectMessageV2 {
     }
   }
 
-  async sendMessage(threadId, text) {
+  async sendMessage(threadId, text, options = {}) {
     try {
-      const result = await this.ig.entity.directThread(threadId).broadcastText(text);
+      let result;
+      
+      if (options.replyToItemId) {
+        result = await this.ig.entity.directThread(threadId).broadcastText(text, {
+          replyToMessageId: options.replyToItemId
+        });
+      } else {
+        result = await this.ig.entity.directThread(threadId).broadcastText(text);
+      }
+      
       logger.info(`Message sent to thread ${threadId}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
       return result;
     } catch (error) {
       logger.error('Failed to send message:', error.message);
@@ -67,12 +83,26 @@ export default class DirectMessageV2 {
     }
   }
 
-  async sendMessageToUser(userId, text) {
+  async sendMessageToUser(userId, text, options = {}) {
     try {
       const userIds = Array.isArray(userId) ? userId : [userId];
       const thread = await this.ig.entity.directThread(userIds.map(id => id.toString()));
-      const result = await thread.broadcastText(text);
+      
+      let result;
+      if (options.replyToItemId) {
+        result = await thread.broadcastText(text, {
+          replyToMessageId: options.replyToItemId
+        });
+      } else {
+        result = await thread.broadcastText(text);
+      }
+      
       logger.info(`Message sent to user(s) ${userIds.join(', ')}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
       return result;
     } catch (error) {
       logger.error('Failed to send message to user:', error.message);
@@ -299,7 +329,7 @@ export default class DirectMessageV2 {
       // Download the video
       const response = await axios.get(videoUrl, {
         responseType: 'arraybuffer',
-        timeout: 60000, // Longer timeout for videos
+        timeout: 60000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
@@ -337,6 +367,187 @@ export default class DirectMessageV2 {
     }
   }
 
+  async getMessageMediaUrl(threadId, itemId) {
+    try {
+      const thread = await this.getThread(threadId);
+      const message = thread.items.find(item => item.item_id === itemId);
+      
+      if (!message) {
+        throw new Error(`Message ${itemId} not found in thread`);
+      }
+
+      const mediaUrls = {
+        item_id: itemId,
+        item_type: message.item_type,
+        media: null
+      };
+
+      if (message.media) {
+        mediaUrls.media = {
+          id: message.media.id,
+          media_type: message.media.media_type
+        };
+
+        if (message.media.image_versions2) {
+          mediaUrls.media.images = message.media.image_versions2.candidates.map(img => ({
+            url: img.url,
+            width: img.width,
+            height: img.height
+          }));
+        }
+
+        if (message.media.video_versions) {
+          mediaUrls.media.videos = message.media.video_versions.map(vid => ({
+            url: vid.url,
+            width: vid.width,
+            height: vid.height,
+            type: vid.type
+          }));
+        }
+
+        if (message.media.carousel_media) {
+          mediaUrls.media.carousel = message.media.carousel_media.map(item => {
+            const carouselItem = { id: item.id };
+            if (item.image_versions2) {
+              carouselItem.images = item.image_versions2.candidates;
+            }
+            if (item.video_versions) {
+              carouselItem.videos = item.video_versions;
+            }
+            return carouselItem;
+          });
+        }
+      }
+
+      logger.info(`Retrieved media URLs for message ${itemId}`);
+      return mediaUrls;
+    } catch (error) {
+      logger.error('Failed to get message media URL:', error.message);
+      throw new Error(`Failed to get message media URL: ${error.message}`);
+    }
+  }
+
+  async downloadMessageMedia(threadId, itemId, savePath = null) {
+    try {
+      const mediaInfo = await this.getMessageMediaUrl(threadId, itemId);
+      
+      if (!mediaInfo.media) {
+        throw new Error('No media found in this message');
+      }
+
+      let downloadUrl = null;
+      let fileExtension = 'jpg';
+
+      if (mediaInfo.media.videos && mediaInfo.media.videos.length > 0) {
+        downloadUrl = mediaInfo.media.videos[0].url;
+        fileExtension = 'mp4';
+      } else if (mediaInfo.media.images && mediaInfo.media.images.length > 0) {
+        downloadUrl = mediaInfo.media.images[0].url;
+        fileExtension = 'jpg';
+      } else {
+        throw new Error('No downloadable media URL found');
+      }
+
+      const response = await axios.get(downloadUrl, {
+        responseType: 'arraybuffer',
+        timeout: 60000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      const finalPath = savePath || `/tmp/media_${Date.now()}.${fileExtension}`;
+      writeFileSync(finalPath, response.data);
+      
+      logger.success(`Media downloaded to ${finalPath}`);
+      return {
+        path: finalPath,
+        size: response.data.length,
+        type: fileExtension,
+        url: downloadUrl
+      };
+    } catch (error) {
+      logger.error('Failed to download message media:', error.message);
+      throw new Error(`Failed to download message media: ${error.message}`);
+    }
+  }
+
+  async sendGif(threadId, gifUrl) {
+    try {
+      const result = await this.ig.entity.directThread(threadId).broadcastGiphy({
+        giphy_id: gifUrl
+      });
+      logger.info(`GIF sent to thread ${threadId}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
+      return result;
+    } catch (error) {
+      logger.error('Failed to send GIF:', error.message);
+      throw new Error(`Failed to send GIF: ${error.message}`);
+    }
+  }
+
+  async sendAnimatedMedia(threadId, mediaId) {
+    try {
+      const result = await this.ig.entity.directThread(threadId).broadcastAnimatedMedia({
+        media_id: mediaId
+      });
+      logger.info(`Animated media sent to thread ${threadId}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
+      return result;
+    } catch (error) {
+      logger.error('Failed to send animated media:', error.message);
+      throw new Error(`Failed to send animated media: ${error.message}`);
+    }
+  }
+
+  async shareMediaToThread(threadId, mediaId, message = '') {
+    try {
+      const result = await this.ig.entity.directThread(threadId).broadcastMediaShare({
+        media_id: mediaId,
+        text: message
+      });
+      logger.info(`Media shared to thread ${threadId}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
+      return result;
+    } catch (error) {
+      logger.error('Failed to share media:', error.message);
+      throw new Error(`Failed to share media: ${error.message}`);
+    }
+  }
+
+  async forwardMessage(fromThreadId, toThreadId, itemId) {
+    try {
+      const mediaInfo = await this.getMessageMediaUrl(fromThreadId, itemId);
+      
+      if (mediaInfo.media) {
+        if (mediaInfo.media.videos) {
+          const videoUrl = mediaInfo.media.videos[0].url;
+          return await this.sendVideoFromUrl(toThreadId, videoUrl);
+        } else if (mediaInfo.media.images) {
+          const imageUrl = mediaInfo.media.images[0].url;
+          return await this.sendPhotoFromUrl(toThreadId, imageUrl);
+        }
+      }
+      
+      throw new Error('Cannot forward this message type');
+    } catch (error) {
+      logger.error('Failed to forward message:', error.message);
+      throw new Error(`Failed to forward message: ${error.message}`);
+    }
+  }
+
   async sendReaction(threadId, itemId, emoji) {
     try {
       await this.ig.entity.directThread(threadId).broadcastReaction({
@@ -367,9 +578,25 @@ export default class DirectMessageV2 {
     try {
       await this.ig.entity.directThread(threadId).deleteItem(itemId);
       logger.info(`Message ${itemId} unsent`);
+      
+      if (this.replyHandlers.has(itemId)) {
+        this.replyHandlers.delete(itemId);
+        logger.debug(`Cleared reply handler for deleted message ${itemId}`);
+      }
     } catch (error) {
       logger.error('Failed to unsend message:', error.message);
       throw new Error(`Failed to unsend message: ${error.message}`);
+    }
+  }
+
+  async editMessage(threadId, itemId, newText) {
+    try {
+      await this.ig.entity.directThread(threadId).editMessage(itemId, newText);
+      logger.info(`Message ${itemId} edited`);
+      return { success: true, item_id: itemId, new_text: newText };
+    } catch (error) {
+      logger.error('Failed to edit message:', error.message);
+      throw new Error(`Failed to edit message: ${error.message}`);
     }
   }
 
@@ -463,6 +690,55 @@ export default class DirectMessageV2 {
     }
   }
 
+  registerReplyHandler(itemId, callback, timeout = 120000) {
+    this.replyHandlers.set(itemId, {
+      callback: callback,
+      timestamp: Date.now()
+    });
+    
+    setTimeout(() => {
+      if (this.replyHandlers.has(itemId)) {
+        this.replyHandlers.delete(itemId);
+        logger.debug(`Reply handler for ${itemId} expired after ${timeout}ms`);
+      }
+    }, timeout);
+    
+    logger.debug(`Reply handler registered for message ${itemId}`);
+  }
+
+  clearReplyHandler(itemId) {
+    if (this.replyHandlers.has(itemId)) {
+      this.replyHandlers.delete(itemId);
+      logger.debug(`Reply handler cleared for message ${itemId}`);
+      return true;
+    }
+    return false;
+  }
+
+  async sendMessageWithReply(threadId, text, onReplyCallback, options = {}) {
+    const timeout = options.replyTimeout || 120000;
+    
+    const result = await this.sendMessage(threadId, text, options);
+    
+    if (result && result.item_id && onReplyCallback) {
+      this.registerReplyHandler(result.item_id, onReplyCallback, timeout);
+    }
+    
+    return result;
+  }
+
+  async sendMessageToUserWithReply(userId, text, onReplyCallback, options = {}) {
+    const timeout = options.replyTimeout || 120000;
+    
+    const result = await this.sendMessageToUser(userId, text, options);
+    
+    if (result && result.item_id && onReplyCallback) {
+      this.registerReplyHandler(result.item_id, onReplyCallback, timeout);
+    }
+    
+    return result;
+  }
+
   async startPolling(interval = 5000) {
     if (this.isPolling) {
       logger.warn('Polling already active');
@@ -480,17 +756,54 @@ export default class DirectMessageV2 {
         if (inbox.threads) {
           for (const thread of inbox.threads) {
             if (thread.items && thread.items.length > 0) {
-              const latestMessage = thread.items[0];
-              
-              if (latestMessage.user_id !== parseInt(this.client.userId)) {
-                this.client.emit('message', {
+              for (const item of thread.items) {
+                if (!item || !item.item_id) continue;
+                
+                if (this.seenMessageIds.has(item.item_id)) {
+                  continue;
+                }
+                
+                this.seenMessageIds.add(item.item_id);
+                
+                if (this.seenMessageIds.size > 10000) {
+                  const itemsToDelete = Array.from(this.seenMessageIds).slice(0, 5000);
+                  itemsToDelete.forEach(id => this.seenMessageIds.delete(id));
+                }
+                
+                const messageEvent = {
                   thread_id: thread.thread_id,
-                  item_id: latestMessage.item_id,
-                  user_id: latestMessage.user_id,
-                  text: latestMessage.text,
-                  timestamp: latestMessage.timestamp,
-                  message: latestMessage
-                });
+                  item_id: item.item_id,
+                  user_id: item.user_id,
+                  text: item.text || '',
+                  timestamp: item.timestamp,
+                  message: item,
+                  is_from_me: item.user_id && item.user_id.toString() === this.client.userId
+                };
+                
+                if (item.replied_to_message) {
+                  messageEvent.messageReply = {
+                    item_id: item.replied_to_message.item_id,
+                    text: item.replied_to_message.text || '',
+                    user_id: item.replied_to_message.user_id,
+                    timestamp: item.replied_to_message.timestamp
+                  };
+                  
+                  if (this.replyHandlers.has(item.replied_to_message.item_id)) {
+                    const handler = this.replyHandlers.get(item.replied_to_message.item_id);
+                    try {
+                      await handler.callback(messageEvent);
+                      this.replyHandlers.delete(item.replied_to_message.item_id);
+                    } catch (handlerError) {
+                      logger.error('Reply handler error:', handlerError.message);
+                    }
+                  }
+                }
+                
+                this.client.emit('message', messageEvent);
+                
+                if (item.user_id && item.user_id.toString() !== this.client.userId) {
+                  logger.debug(`New message from ${item.user_id}: ${item.text || '(media)'}`);
+                }
               }
             }
           }
@@ -533,6 +846,7 @@ export default class DirectMessageV2 {
 
   async unarchiveThread(threadId) {
     try {
+      await this.ig.entity.directThread(threadId).unhide();
       logger.info(`Thread ${threadId} unarchived`);
     } catch (error) {
       logger.error('Failed to unarchive thread:', error.message);
@@ -542,6 +856,7 @@ export default class DirectMessageV2 {
 
   async removeUserFromThread(threadId, userId) {
     try {
+      await this.ig.entity.directThread(threadId).removeUser(userId.toString());
       logger.info(`User ${userId} removed from thread ${threadId}`);
     } catch (error) {
       logger.error('Failed to remove user from thread:', error.message);
@@ -551,7 +866,16 @@ export default class DirectMessageV2 {
 
   async sendSticker(threadId, stickerId) {
     try {
+      const result = await this.ig.entity.directThread(threadId).broadcastSticker({
+        sticker_id: stickerId
+      });
       logger.info(`Sticker sent to thread ${threadId}`);
+      
+      if (result && result.item_id) {
+        this.seenMessageIds.add(result.item_id);
+      }
+      
+      return result;
     } catch (error) {
       logger.error('Failed to send sticker:', error.message);
       throw new Error(`Failed to send sticker: ${error.message}`);

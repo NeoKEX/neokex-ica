@@ -20,12 +20,28 @@ class InstagramChatAPI extends InstagramClientV2 {
     return result;
   }
 
-  async sendMessage(threadId, text) {
-    return await this.dm.sendMessage(threadId, text);
+  async sendMessage(threadId, text, options = {}) {
+    return await this.dm.sendMessage(threadId, text, options);
   }
 
-  async sendMessageToUser(userId, text) {
-    return await this.dm.sendMessageToUser(userId, text);
+  async sendMessageToUser(userId, text, options = {}) {
+    return await this.dm.sendMessageToUser(userId, text, options);
+  }
+
+  async sendMessageWithReply(threadId, text, onReplyCallback, options = {}) {
+    return await this.dm.sendMessageWithReply(threadId, text, onReplyCallback, options);
+  }
+
+  async sendMessageToUserWithReply(userId, text, onReplyCallback, options = {}) {
+    return await this.dm.sendMessageToUserWithReply(userId, text, onReplyCallback, options);
+  }
+
+  registerReplyHandler(itemId, callback, timeout = 120000) {
+    return this.dm.registerReplyHandler(itemId, callback, timeout);
+  }
+
+  clearReplyHandler(itemId) {
+    return this.dm.clearReplyHandler(itemId);
   }
 
   async getInbox() {
@@ -64,6 +80,14 @@ class InstagramChatAPI extends InstagramClientV2 {
     return await this.dm.sendVideo(threadId, videoPath, options);
   }
 
+  async sendVideoFromUrl(threadId, videoUrl) {
+    return await this.dm.sendVideoFromUrl(threadId, videoUrl);
+  }
+
+  async sendPhotoFromUrl(threadId, photoUrl) {
+    return await this.dm.sendPhotoFromUrl(threadId, photoUrl);
+  }
+
   async sendVoiceNote(threadId, audioPath, options = {}) {
     return await this.dm.sendVoiceNote(threadId, audioPath, options);
   }
@@ -72,8 +96,32 @@ class InstagramChatAPI extends InstagramClientV2 {
     return await this.dm.sendSticker(threadId, stickerId);
   }
 
+  async sendGif(threadId, gifUrl) {
+    return await this.dm.sendGif(threadId, gifUrl);
+  }
+
+  async sendAnimatedMedia(threadId, mediaId) {
+    return await this.dm.sendAnimatedMedia(threadId, mediaId);
+  }
+
+  async shareMediaToThread(threadId, mediaId, message = '') {
+    return await this.dm.shareMediaToThread(threadId, mediaId, message);
+  }
+
   async sendLink(threadId, linkUrl, linkText = '') {
     return await this.dm.sendLink(threadId, linkUrl, linkText);
+  }
+
+  async getMessageMediaUrl(threadId, itemId) {
+    return await this.dm.getMessageMediaUrl(threadId, itemId);
+  }
+
+  async downloadMessageMedia(threadId, itemId, savePath = null) {
+    return await this.dm.downloadMessageMedia(threadId, itemId, savePath);
+  }
+
+  async forwardMessage(fromThreadId, toThreadId, itemId) {
+    return await this.dm.forwardMessage(fromThreadId, toThreadId, itemId);
   }
 
   async sendReaction(threadId, itemId, emoji) {
@@ -86,6 +134,10 @@ class InstagramChatAPI extends InstagramClientV2 {
 
   async unsendMessage(threadId, itemId) {
     return await this.dm.unsendMessage(threadId, itemId);
+  }
+
+  async editMessage(threadId, itemId, newText) {
+    return await this.dm.editMessage(threadId, itemId, newText);
   }
 
   async indicateTyping(threadId, isTyping = true) {

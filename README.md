@@ -17,12 +17,17 @@ This is an **unofficial** library that uses Instagram's private/internal APIs. U
 ## ✨ Features
 
 ### 📱 Complete Messaging Suite
-- ✅ **Text Messages** - Send to threads or users
-- ✅ **Photo Uploads** - Send images from files or URLs with auto-processing
+- ✅ **Text Messages** - Send to threads or users with reply support
+- ✅ **Photo/Video Uploads** - Send media from files or URLs with auto-processing
+- ✅ **GIFs & Animated Media** - Send GIFs and animated stickers
 - ✅ **Link Sharing** - Share URLs with previews
 - ✅ **Reactions** - React to messages with emojis
+- ✅ **Message Editing** - Edit sent messages
 - ✅ **Unsend Messages** - Delete sent messages
 - ✅ **Mark as Seen** - Read receipts
+- ✅ **onReply Handlers** - Advanced callback pattern for handling replies (like ws3-fca)
+- ✅ **Media Download** - Extract and download video/image URLs from messages
+- ✅ **Message Forwarding** - Forward media between threads
 
 ### 🎯 Thread Management
 - Get inbox and filter conversations
@@ -126,34 +131,93 @@ const username = bot.getCurrentUsername();
 
 ```javascript
 // Send text message to thread
-await bot.dm.sendMessage(threadId, 'Hello!');
+await bot.sendMessage(threadId, 'Hello!');
+
+// Send text message with reply to another message
+await bot.sendMessage(threadId, 'Reply text', { replyToItemId: 'message_id' });
 
 // Send text message to user (creates thread if needed)
-await bot.dm.sendMessageToUser(userId, 'Hello!');
+await bot.sendMessageToUser(userId, 'Hello!');
 
 // Send photo from file
-await bot.dm.sendPhoto(threadId, './image.jpg');
+await bot.sendPhoto(threadId, './image.jpg');
 
 // Send photo from URL
-await bot.dm.sendPhotoFromUrl(threadId, 'https://example.com/image.jpg');
+await bot.sendPhotoFromUrl(threadId, 'https://example.com/image.jpg');
+
+// Send video from URL
+await bot.sendVideoFromUrl(threadId, 'https://example.com/video.mp4');
+
+// Send GIF
+await bot.sendGif(threadId, 'giphy_id');
+
+// Send animated media
+await bot.sendAnimatedMedia(threadId, 'media_id');
+
+// Share media to thread
+await bot.shareMediaToThread(threadId, 'media_id', 'Optional message');
 
 // Send link
-await bot.dm.sendLink(threadId, 'https://example.com', 'Check this out!');
+await bot.sendLink(threadId, 'https://example.com', 'Check this out!');
+
+// Send sticker
+await bot.sendSticker(threadId, 'sticker_id');
 
 // React to message
-await bot.dm.sendReaction(threadId, itemId, '❤️');
+await bot.sendReaction(threadId, itemId, '❤️');
 
 // Remove reaction
-await bot.dm.removeReaction(threadId, itemId);
+await bot.removeReaction(threadId, itemId);
+
+// Edit message
+await bot.editMessage(threadId, itemId, 'New text');
 
 // Unsend message
-await bot.dm.unsendMessage(threadId, itemId);
+await bot.unsendMessage(threadId, itemId);
 
 // Mark message as seen
-await bot.dm.markAsSeen(threadId, itemId);
+await bot.markAsSeen(threadId, itemId);
 
 // Show typing indicator
-await bot.dm.indicateTyping(threadId, true);
+await bot.indicateTyping(threadId, true);
+```
+
+### Advanced Messaging - onReply Callbacks (like ws3-fca)
+
+```javascript
+// Send message and wait for reply
+await bot.sendMessageWithReply(threadId, 'What is your name?', async (replyEvent) => {
+  const userName = replyEvent.text;
+  await bot.sendMessage(replyEvent.thread_id, `Nice to meet you, ${userName}!`);
+});
+
+// Or register reply handler manually
+const result = await bot.sendMessage(threadId, 'Pick a number: 1, 2, or 3');
+bot.registerReplyHandler(result.item_id, async (replyEvent) => {
+  const choice = replyEvent.text;
+  await bot.sendMessage(threadId, `You chose: ${choice}`);
+});
+
+// Clear a reply handler
+bot.clearReplyHandler(itemId);
+```
+
+### Media Download & URLs
+
+```javascript
+// Get media URLs from a message (supports images, videos, carousels)
+const mediaInfo = await bot.getMessageMediaUrl(threadId, itemId);
+console.log(mediaInfo.media.videos); // Array of video URLs with different qualities
+console.log(mediaInfo.media.images); // Array of image URLs
+
+// Download media from a message
+const downloaded = await bot.downloadMessageMedia(threadId, itemId, './save/path.mp4');
+console.log(`Downloaded to: ${downloaded.path}`);
+console.log(`File size: ${downloaded.size} bytes`);
+console.log(`Download URL: ${downloaded.url}`);
+
+// Forward message to another thread
+await bot.forwardMessage(fromThreadId, toThreadId, itemId);
 ```
 
 ### Inbox & Thread Management
@@ -249,7 +313,7 @@ await bot.unfollowUser(userId);
 
 ## 🎨 Advanced Examples
 
-### Auto-Reply Bot
+### Auto-Reply Bot with onReply (Enhanced)
 
 ```javascript
 import InstagramChatAPI from 'neokex-ica';
@@ -259,24 +323,103 @@ await bot.loadCookiesFromFile('./cookies.txt');
 
 // Listen for new messages
 bot.on('message', async (message) => {
-  const { threadId, text, userId } = message;
+  const { thread_id, text, is_from_me } = message;
   
   // Don't reply to yourself
-  if (userId === bot.getCurrentUserID()) return;
+  if (is_from_me) return;
   
-  // Auto-reply
-  await bot.dm.sendMessage(threadId, `Thanks for your message: "${text}"`);
+  // Auto-reply with onReply callback
+  if (text.toLowerCase().includes('hello')) {
+    await bot.sendMessageWithReply(thread_id, 'Hi! What can I help you with?', async (reply) => {
+      await bot.sendMessage(thread_id, `Got it! You said: "${reply.text}"`);
+    });
+  }
 });
 
 // Start polling for messages every 5 seconds
-bot.dm.startPolling(5000);
+await bot.startListening(5000);
 ```
 
-### Send Photo from URL
+### Interactive Menu Bot (onReply Pattern)
 
 ```javascript
+import InstagramChatAPI from 'neokex-ica';
+
+const bot = new InstagramChatAPI();
+await bot.loadCookiesFromFile('./cookies.txt');
+
+bot.on('message', async (msg) => {
+  if (msg.is_from_me) return;
+  
+  if (msg.text === '!menu') {
+    await bot.sendMessageWithReply(
+      msg.thread_id,
+      '📋 Menu:\n1. View Products\n2. Support\n3. Pricing\n\nReply with a number:',
+      async (reply) => {
+        const choice = reply.text.trim();
+        if (choice === '1') {
+          await bot.sendMessage(reply.thread_id, '🛍️ Here are our products...');
+        } else if (choice === '2') {
+          await bot.sendMessage(reply.thread_id, '💬 Contact support at...');
+        } else if (choice === '3') {
+          await bot.sendMessage(reply.thread_id, '💰 Our pricing: $10/month');
+        } else {
+          await bot.sendMessage(reply.thread_id, '❌ Invalid choice. Try !menu again');
+        }
+      },
+      { replyTimeout: 60000 } // 1 minute timeout
+    );
+  }
+});
+
+await bot.startListening(5000);
+```
+
+### Media Download Bot
+
+```javascript
+import InstagramChatAPI from 'neokex-ica';
+
+const bot = new InstagramChatAPI();
+await bot.loadCookiesFromFile('./cookies.txt');
+
+bot.on('message', async (msg) => {
+  if (msg.is_from_me) return;
+  
+  // When user sends media, download it
+  if (msg.message.media) {
+    try {
+      const mediaUrls = await bot.getMessageMediaUrl(msg.thread_id, msg.item_id);
+      
+      if (mediaUrls.media.videos && mediaUrls.media.videos.length > 0) {
+        console.log('Video URLs:', mediaUrls.media.videos);
+        
+        // Download the video
+        const downloaded = await bot.downloadMessageMedia(msg.thread_id, msg.item_id);
+        console.log(`Downloaded video to: ${downloaded.path}`);
+        
+        // Forward to another thread
+        await bot.forwardMessage(msg.thread_id, 'another_thread_id', msg.item_id);
+      }
+    } catch (error) {
+      console.error('Media download error:', error.message);
+    }
+  }
+});
+
+await bot.startListening(5000);
+```
+
+### Send Photo/Video from URL
+
+```javascript
+// Send photo from URL
 const photoUrl = 'https://picsum.photos/800/600';
-await bot.dm.sendPhotoFromUrl(threadId, photoUrl);
+await bot.sendPhotoFromUrl(threadId, photoUrl);
+
+// Send video from URL (streaming support)
+const videoUrl = 'https://example.com/video.mp4';
+await bot.sendVideoFromUrl(threadId, videoUrl);
 ```
 
 ### Bulk DM Sender
@@ -343,77 +486,33 @@ const bot = new InstagramChatAPI({
 
 ---
 
-## 📋 Available Methods (60+)
+## 📋 Available Methods (80+)
 
 <details>
-<summary>Click to expand full method list</summary>
-
-### Authentication
-- `login(username, password)`
-- `loadCookiesFromFile(path)`
-- `saveCookiesToFile(path)`
-- `getCurrentUserID()`
-- `getCurrentUsername()`
-
-### Direct Messages
-- `dm.sendMessage(threadId, text)`
-- `dm.sendMessageToUser(userId, text)`
-- `dm.sendPhoto(threadId, photoPath)`
-- `dm.sendPhotoFromUrl(threadId, photoUrl)`
-- `dm.sendLink(threadId, url, text)`
-- `dm.sendReaction(threadId, itemId, emoji)`
-- `dm.removeReaction(threadId, itemId)`
-- `dm.unsendMessage(threadId, itemId)`
-- `dm.markAsSeen(threadId, itemId)`
-- `dm.indicateTyping(threadId, isTyping)`
-
-### Inbox & Threads
-- `getInbox()`
-- `dm.getThread(threadId)`
-- `dm.getPendingInbox()`
-- `dm.approveThread(threadId)`
-- `dm.muteThread(threadId)`
-- `dm.unmuteThread(threadId)`
-- `dm.deleteThread(threadId)`
-
-### Users
-- `getUserInfo(userId)`
-- `getUserInfoByUsername(username)`
-- `searchUsers(query)`
-- `getFollowers(userId, limit)`
-- `getFollowing(userId, limit)`
-- `followUser(userId)`
-- `unfollowUser(userId)`
-
-### Feed & Posts
-- `getTimelineFeed(limit)`
-- `getUserFeed(userId, limit)`
-- `likePost(mediaId)`
-- `unlikePost(mediaId)`
-- `commentPost(mediaId, text)`
-- `getMediaInfo(mediaId)`
-- `deletePost(mediaId)`
-
-### Uploads
-- `uploadPhoto(photoPath, caption)`
-- `uploadStory(photoPath)`
-
-### Events
-- `on('message', callback)`
-- `on('error', callback)`
-- `dm.startPolling(interval)`
-- `dm.stopPolling()`
-
-</details>
+<parameter name="summary">Click to expand full method list
 
 ---
+
+## 🚀 What's New in v2.1
+
+- ✅ **onReply Callbacks** - Advanced reply handling like ws3-fca/fca-unofficial
+- ✅ **Reply to Messages** - Send messages as replies to other messages
+- ✅ **Message Editing** - Edit sent messages
+- ✅ **Media Download** - Extract and download video/image URLs from DMs
+- ✅ **GIF Support** - Send GIFs and animated media
+- ✅ **Video Streaming** - Send videos from URLs with streaming support
+- ✅ **Message Forwarding** - Forward media between threads
+- ✅ **Fixed Polling** - Messages now show in real-time without needing to refresh
+- ✅ **Better Event Tracking** - No duplicate message emissions
+- ✅ **Complete Method Implementations** - All stub methods now fully functional
 
 ## ❌ Known Limitations
 
 Due to Instagram API restrictions:
-- ❌ **Video DMs are disabled** - Instagram deprecated the video DM endpoint
-- ❌ **Voice notes are disabled** - Instagram deprecated the voice note endpoint
+- ⚠️ **Voice notes** - Limited support due to Instagram API restrictions
 - ✅ **Photos work perfectly** - Including from URLs with auto-processing
+- ✅ **Videos supported** - Send from files and URLs with streaming support
+- ✅ **GIFs supported** - Full Giphy integration
 
 ---
 
