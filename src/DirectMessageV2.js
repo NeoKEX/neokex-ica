@@ -1,6 +1,7 @@
 import logger from './Logger.js';
 import { sleep } from './utils.js';
 import { readFileSync } from 'fs';
+import sharp from 'sharp';
 
 export default class DirectMessageV2 {
   constructor(client) {
@@ -108,17 +109,94 @@ export default class DirectMessageV2 {
   }
 
   async sendPhoto(threadId, photoPath) {
-    try {
-      const photoBuffer = readFileSync(photoPath);
-      const result = await this.ig.entity.directThread(threadId).broadcastPhoto({
-        file: photoBuffer
-      });
-      logger.info(`Photo sent to thread ${threadId}`);
-      return result;
-    } catch (error) {
-      logger.error('Failed to send photo:', error.message);
-      throw new Error(`Failed to send photo: ${error.message}`);
+    const maxRetries = 3;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.info(`Sending photo (attempt ${attempt}/${maxRetries})...`);
+        
+        // Preprocess image: convert to JPEG, resize to Instagram's limits
+        const originalBuffer = readFileSync(photoPath);
+        let processedBuffer;
+        
+        try {
+          const image = sharp(originalBuffer);
+          const metadata = await image.metadata();
+          
+          // Resize if larger than Instagram's DM limits (1080px max dimension)
+          let resizeOptions = {};
+          if (metadata.width > 1080 || metadata.height > 1080) {
+            resizeOptions = {
+              width: 1080,
+              height: 1080,
+              fit: 'inside',
+              withoutEnlargement: true
+            };
+            logger.info(`Resizing image from ${metadata.width}x${metadata.height} to fit 1080px`);
+          }
+          
+          // Convert to JPEG with quality settings
+          processedBuffer = await image
+            .resize(resizeOptions.width ? resizeOptions : undefined)
+            .jpeg({ quality: 85, mozjpeg: true })
+            .toBuffer();
+          
+          // Check file size (Instagram limit ~8MB)
+          const sizeInMB = processedBuffer.length / (1024 * 1024);
+          if (sizeInMB > 8) {
+            logger.warn(`Image size ${sizeInMB.toFixed(2)}MB exceeds 8MB, reducing quality`);
+            processedBuffer = await sharp(originalBuffer)
+              .resize(resizeOptions.width ? resizeOptions : undefined)
+              .jpeg({ quality: 70, mozjpeg: true })
+              .toBuffer();
+          }
+          
+          logger.info(`Image processed: ${processedBuffer.length / 1024}KB JPEG`);
+        } catch (preprocessError) {
+          logger.warn(`Image preprocessing failed: ${preprocessError.message}, using original`);
+          processedBuffer = originalBuffer;
+        }
+        
+        // Attempt to send the photo
+        const result = await this.ig.entity.directThread(threadId).broadcastPhoto({
+          file: processedBuffer
+        });
+        
+        logger.success(`Photo sent to thread ${threadId}`);
+        return result;
+        
+      } catch (error) {
+        lastError = error;
+        const errorMsg = error.message || String(error);
+        
+        // Check if it's a retryable error (5xx, rate limit, etc)
+        const isRetryable = 
+          errorMsg.includes('503') || 
+          errorMsg.includes('502') || 
+          errorMsg.includes('500') ||
+          errorMsg.includes('429') ||
+          errorMsg.includes('Service Unavailable') ||
+          errorMsg.includes('throttle');
+        
+        if (isRetryable && attempt < maxRetries) {
+          // Exponential backoff with jitter: 2^attempt * 1000ms + random(0-1000)ms
+          const baseDelay = Math.pow(2, attempt) * 1000;
+          const jitter = Math.random() * 1000;
+          const delay = baseDelay + jitter;
+          
+          logger.warn(`Retryable error (${errorMsg.substring(0, 50)}...), waiting ${(delay/1000).toFixed(1)}s before retry ${attempt + 1}/${maxRetries}`);
+          await sleep(delay);
+          continue;
+        } else {
+          logger.error(`Failed to send photo: ${errorMsg}`);
+          throw new Error(`Failed to send photo: ${errorMsg}`);
+        }
+      }
     }
+    
+    // All retries exhausted
+    throw new Error(`Failed to send photo after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`);
   }
 
   async sendVideo(threadId, videoPath, options = {}) {
