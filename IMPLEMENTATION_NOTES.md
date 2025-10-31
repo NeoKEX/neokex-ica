@@ -272,16 +272,16 @@ async sendPhoto(threadId, photoPath) {
 
 These open-source projects have working implementations:
 
-1. **Python**: [instagrapi](https://github.com/subzeroid/instagrapi)
+1. **Python**: instagrapi
    - Most actively maintained (2025)
    - Has working login, 2FA, media uploads
    - Good reference for API endpoints and payloads
 
-2. **Python**: [instagram-private-api](https://github.com/ping/instagram_private_api)
+2. **Python**: instagram-private-api
    - Older but well-documented
    - Good for understanding request signing
 
-3. **Node.js**: [instagram-private-api (Node port)](https://github.com/dilame/instagram-private-api)
+3. **Node.js**: instagram-private-api (Node port)
    - JavaScript implementation
    - Closer to this project's structure
 

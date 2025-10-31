@@ -1,6 +1,6 @@
-# Integration Guide: Extracted Features from dilame/instagram-private-api
+# Integration Guide: Extracted Features from Third-Party Libraries
 
-This guide shows how to integrate key features from the `dilame/instagram-private-api` library into your `neokex-ica` library.
+This guide shows how to integrate key features from third-party Instagram libraries into your `neokex-ica` library.
 
 ## 🔑 1. Real Instagram Signature Key
 
@@ -37,7 +37,7 @@ this.appVersionCode = '350696709';
 ## 📸 2. Photo Upload Implementation
 
 ### What We Found
-The dilame library uploads photos in two steps:
+The reference library uploads photos in two steps:
 1. Upload the photo file to `/rupload_igphoto/` endpoint
 2. Broadcast with `configure_photo` using the returned `upload_id`
 
@@ -355,7 +355,7 @@ async sendVoiceNote(threadId, audioPath, options = {}) {
 ## 🔧 5. Enhanced Signing Method
 
 ### What We Found
-The dilame library uses a cleaner signature implementation with proper formatting.
+The reference library uses a cleaner signature implementation with proper formatting.
 
 **File: `src/utils.js`** - Update signPayload:
 
@@ -401,7 +401,7 @@ export function generateUserBreadcrumb(textLength) {
 ## 📦 6. Additional Constants and Headers
 
 ### What We Found
-The dilame library uses specific version numbers and additional headers.
+The reference library uses specific version numbers and additional headers.
 
 **File: `src/InstagramClient.js`** - Update constants:
 
@@ -456,7 +456,7 @@ getHeaders() {
 ## 🔄 7. Improved Error Handling
 
 ### What We Found
-The dilame library has comprehensive error handling for various Instagram responses.
+The reference library has comprehensive error handling for various Instagram responses.
 
 **File: `src/InstagramClient.js`** - Enhance error handling:
 
@@ -622,7 +622,6 @@ testMediaUpload();
 
 ## 📚 References
 
-- Original Library: https://github.com/dilame/instagram-private-api
 - Instagram API Version: 222.0.0.13.114
 - Signature Version: 4
 - Last Updated: October 2025

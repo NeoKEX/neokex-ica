@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   instagrapi:
-    image: subzeroid/instagrapi-rest:latest
+    image: instagrapi-rest:latest
     ports:
       - "8000:8000"
     environment:

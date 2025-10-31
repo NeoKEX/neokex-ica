@@ -6,7 +6,7 @@
 |---------|----------|-------|-------------|---------|--------------|-----------------|----------|
 | **instagrapi** | Python | 5.6k | Oct 2025 ✅ | Active | ✅ Working | ✅ Working | Production (via REST) |
 | **instagram-web-api** | Node.js | 1.1k | Aug 2020 | Stable | ✅ Working | ✅ Working | Direct Node.js integration |
-| **dilame/instagram-private-api** | Node.js (TS) | 6.3k | Mar 2024 | Paid v3.x.x | ✅ Working | ✅ Working | Legacy/Learning |
+| **instagram-private-api** | Node.js (TS) | 6.3k | Mar 2024 | Paid v3.x.x | ✅ Working | ✅ Working | Legacy/Learning |
 | **Your neokex-ica** | Node.js | - | Current | Custom | ⚠️ Needs fix | ✅ Working | Lightweight/Custom |
 
 ---
@@ -44,7 +44,7 @@ version: '3.8'
 
 services:
   instagrapi:
-    image: subzeroid/instagrapi-rest:latest
+    image: instagrapi-rest:latest
     ports:
       - "8000:8000"
     environment:
@@ -410,9 +410,9 @@ const client = new Instagram({
 
 ---
 
-## 🔧 Option 3: Extract Features from dilame Library
+## 🔧 Option 3: Extract Features from Third-Party Library
 
-I've already created `DILAME_INTEGRATION_GUIDE.md` with:
+I've already created `THIRD_PARTY_INTEGRATION_GUIDE.md` with:
 - Real signature key: `9193488027538fd3450b83b7d05286d4ca9599a0f7eeed90d8c85925698a05dc`
 - Photo upload implementation
 - Video upload implementation
@@ -431,7 +431,7 @@ I've already created `DILAME_INTEGRATION_GUIDE.md` with:
 
 ## 📋 Feature Comparison
 
-| Feature | neokex-ica (current) | + instagrapi-rest | + instagram-web-api | + dilame fixes |
+| Feature | neokex-ica (current) | + instagrapi-rest | + instagram-web-api | + library fixes |
 |---------|---------------------|-------------------|---------------------|----------------|
 | Text Messages | ✅ | ✅ | ✅ | ✅ |
 | Photo DM | ❌ | ✅ | ⚠️ Limited | ✅ |
@@ -462,7 +462,7 @@ I've already created `DILAME_INTEGRATION_GUIDE.md` with:
 - Node.js wrapper: 10 minutes
 - **Total: 15 minutes** to get photo/video/voice working!
 
-### **For Learning/Research:** Use Option 3 (dilame fixes)
+### **For Learning/Research:** Use Option 3 (library extraction)
 
 **Why:**
 1. Understand how Instagram API actually works
@@ -480,7 +480,7 @@ I've already created `DILAME_INTEGRATION_GUIDE.md` with:
 
 ### Step 1: Start instagrapi-rest
 ```bash
-docker run -d -p 8000:8000 subzeroid/instagrapi-rest:latest
+docker run -d -p 8000:8000 instagrapi-rest:latest
 ```
 
 ### Step 2: Test it works
@@ -516,7 +516,7 @@ await bot.sendPhoto('user_id', './photo.jpg');
 |--------|-----------|-------------|----------------|-----------------------|
 | instagrapi-rest | Free | Low | 100-200MB RAM | ⭐⭐⭐⭐⭐ |
 | instagram-web-api | Free | Medium | 50MB RAM | ⭐⭐⭐ |
-| dilame fixes | Free | High | 50MB RAM | ⭐⭐⭐ |
+| library extraction | Free | High | 50MB RAM | ⭐⭐⭐ |
 | HikerAPI (SaaS) | $$ | None | None | ⭐⭐⭐⭐⭐ |
 
 ---
@@ -543,9 +543,7 @@ await bot.sendPhoto('user_id', './photo.jpg');
 
 ## 📚 Additional Resources
 
-- **instagrapi docs:** https://subzeroid.github.io/instagrapi/
 - **instagrapi-rest API:** http://localhost:8000/docs (after starting)
-- **instagram-web-api:** https://github.com/jlobos/instagram-web-api
 - **HikerAPI (Paid):** https://hikerapi.com/ (Production-grade managed service)
 
 ---
