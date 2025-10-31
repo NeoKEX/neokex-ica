@@ -39,10 +39,16 @@ export default class DirectMessageV2 {
 
   async getThread(threadId) {
     try {
-      const threadEntity = this.ig.entity.directThread(threadId);
-      const threadInfo = await threadEntity.thread();
+      // Use feed API to get thread items
+      const threadFeed = this.ig.feed.directThread({ thread_id: threadId });
+      const threadItems = await threadFeed.items();
       
-      return threadInfo;
+      // Return in a format similar to what we expect
+      return {
+        thread_id: threadId,
+        items: threadItems,
+        users: []
+      };
     } catch (error) {
       logger.error('Failed to get thread:', error.message);
       throw new Error(`Failed to get thread: ${error.message}`);
