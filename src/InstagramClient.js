@@ -25,13 +25,18 @@ export default class InstagramClient extends EventEmitter {
     
     this.baseUrl = 'https://i.instagram.com/api/v1';
     this.userAgent = 'Instagram 275.0.0.27.98 Android (28/9; 480dpi; 1080x2148; OnePlus; ONEPLUS A6000; OnePlus6; qcom; en_US; 458229237)';
+    this.appVersion = '222.0.0.13.114';
+    this.appVersionCode = '350696709';
     this.igAppId = '567067343352427';
     this.igCapabilities = '3brTv10=';
     this.igConnectionType = 'WIFI';
     this.igConnectionSpeed = '3000kbps';
-    this.bloksVersionId = 'eec9f8a8f269e7a5225acf6d8f118aee6ef2ec76c6c045e32fa2b64a5cf0e5c3';
+    this.bloksVersionId = '388ece79ebc0e70e87873505ed1b0ff335ae2868a978cc951b6721c41d46a30a';
+    this.fbAnalyticsApplicationId = '567067343352427';
     
-    this.SIGNATURE_KEY = 'SIGNATURE';
+    // Real Instagram signature key extracted from Instagram APK
+    this.SIGNATURE_KEY = '9193488027538fd3450b83b7d05286d4ca9599a0f7eeed90d8c85925698a05dc';
+    this.BREADCRUMB_KEY = 'iN4$aGr0m';
   }
 
   async preLoginFlow() {
@@ -388,6 +393,149 @@ export default class InstagramClient extends EventEmitter {
   async getUserInfoByUsername(username) {
     const data = await this.request(`/users/${username}/usernameinfo/`);
     return data.user;
+  }
+
+  async uploadPhoto(photoBuffer, uploadId = null) {
+    const finalUploadId = uploadId || Date.now().toString();
+    const name = `${finalUploadId}_0_${Math.floor(Math.random() * 9000000000) + 1000000000}`;
+    const contentLength = photoBuffer.length;
+
+    const ruploadParams = {
+      retry_context: JSON.stringify({
+        num_step_auto_retry: 0,
+        num_reupload: 0,
+        num_step_manual_retry: 0
+      }),
+      media_type: '1',
+      upload_id: finalUploadId,
+      xsharing_user_ids: JSON.stringify([]),
+      image_compression: JSON.stringify({
+        lib_name: 'moz',
+        lib_version: '3.1.m',
+        quality: '80'
+      })
+    };
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/rupload_igphoto/${name}`,
+        photoBuffer,
+        {
+          headers: {
+            ...this.getHeaders(),
+            'X-Entity-Type': 'image/jpeg',
+            'Offset': '0',
+            'X-Instagram-Rupload-Params': JSON.stringify(ruploadParams),
+            'X-Entity-Name': name,
+            'X-Entity-Length': contentLength.toString(),
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': contentLength.toString(),
+            'Accept-Encoding': 'gzip'
+          }
+        }
+      );
+
+      return {
+        upload_id: response.data.upload_id || finalUploadId,
+        status: response.data.status
+      };
+    } catch (error) {
+      logger.error('Photo upload failed:', error.response?.data || error.message);
+      throw new Error(`Photo upload failed: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async uploadVideo(videoBuffer, options = {}) {
+    const uploadId = options.uploadId || Date.now().toString();
+    const name = `${uploadId}_0_${Math.floor(Math.random() * 9000000000) + 1000000000}`;
+    const contentLength = videoBuffer.length;
+
+    const ruploadParams = {
+      retry_context: JSON.stringify({
+        num_step_auto_retry: 0,
+        num_reupload: 0,
+        num_step_manual_retry: 0
+      }),
+      media_type: options.mediaType || '2',
+      xsharing_user_ids: JSON.stringify([]),
+      upload_id: uploadId,
+      upload_media_height: (options.height || 720).toString(),
+      upload_media_width: (options.width || 720).toString(),
+      upload_media_duration_ms: (options.duration || 3000).toString(),
+    };
+
+    if (options.isDirect) {
+      ruploadParams.direct_v2 = '1';
+    }
+
+    if (options.isDirectVoice) {
+      ruploadParams.is_direct_voice = '1';
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/rupload_igvideo/${name}`,
+        videoBuffer,
+        {
+          headers: {
+            ...this.getHeaders(),
+            'X-Entity-Type': 'video/mp4',
+            'Offset': '0',
+            'X-Instagram-Rupload-Params': JSON.stringify(ruploadParams),
+            'X-Entity-Name': name,
+            'X-Entity-Length': contentLength.toString(),
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': contentLength.toString(),
+            'Accept-Encoding': 'gzip'
+          }
+        }
+      );
+
+      return {
+        upload_id: response.data.upload_id || uploadId,
+        status: response.data.status
+      };
+    } catch (error) {
+      logger.error('Video upload failed:', error.response?.data || error.message);
+      throw new Error(`Video upload failed: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async uploadFinish(uploadId, sourceType = '2', videoLength = 3.0) {
+    try {
+      const payload = new URLSearchParams({
+        timezone_offset: '0',
+        _csrftoken: this.cookies.csrftoken,
+        source_type: sourceType,
+        _uid: this.cookies.ds_user_id,
+        device_id: this.deviceId,
+        _uuid: this.uuid,
+        upload_id: uploadId,
+        device: JSON.stringify({
+          manufacturer: 'OnePlus',
+          model: 'ONEPLUS A6000',
+          android_version: 28,
+          android_release: '9.0'
+        })
+      });
+
+      if (sourceType === '2') {
+        payload.append('video', JSON.stringify({ length: videoLength }));
+      }
+
+      const response = await axios.post(
+        `${this.baseUrl}/media/upload_finish/`,
+        payload.toString(),
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      logger.error('Upload finish failed:', error.response?.data || error.message);
+      throw new Error(`Upload finish failed: ${error.response?.data?.message || error.message}`);
+    }
   }
 
   async getSessionState() {

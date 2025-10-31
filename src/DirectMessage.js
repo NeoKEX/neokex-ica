@@ -204,71 +204,140 @@ export default class DirectMessage {
     return messages;
   }
 
-  async sendPhoto(threadId, photoUrl) {
-    const clientContext = generateUUID();
-    
-    const payload = new URLSearchParams({
-      recipient_users: '[]',
-      action: 'send_item',
-      client_context: clientContext,
-      device_id: this.client.deviceId,
-      mutation_token: clientContext,
-      photo_url: photoUrl,
-      thread_ids: `["${threadId}"]`,
-    });
+  async sendPhoto(threadId, photoPath) {
+    try {
+      const fs = await import('fs');
+      const photoBuffer = fs.readFileSync(photoPath);
+      
+      // Step 1: Upload the photo
+      logger.info('Uploading photo...');
+      const { upload_id } = await this.client.uploadPhoto(photoBuffer);
+      
+      // Step 2: Broadcast with upload_id
+      const clientContext = generateUUID();
+      const payload = new URLSearchParams({
+        recipient_users: '[]',
+        action: 'send_item',
+        thread_ids: `["${threadId}"]`,
+        upload_id: upload_id,
+        allow_full_aspect_ratio: 'true',
+        client_context: clientContext,
+        _csrftoken: this.client.cookies.csrftoken,
+        device_id: this.client.deviceId,
+        _uuid: this.client.uuid
+      });
 
-    const data = await this.client.request(
-      '/direct_v2/threads/broadcast/configure_photo/',
-      'POST',
-      payload.toString()
-    );
+      const data = await this.client.request(
+        '/direct_v2/threads/broadcast/configure_photo/',
+        'POST',
+        payload.toString()
+      );
 
-    return data;
+      logger.success('Photo sent successfully');
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to send photo: ${error.message}`);
+    }
   }
 
-  async sendVideo(threadId, videoUrl) {
-    const clientContext = generateUUID();
-    
-    const payload = new URLSearchParams({
-      recipient_users: '[]',
-      action: 'send_item',
-      client_context: clientContext,
-      device_id: this.client.deviceId,
-      mutation_token: clientContext,
-      video_url: videoUrl,
-      thread_ids: `["${threadId}"]`,
-    });
+  async sendVideo(threadId, videoPath, options = {}) {
+    try {
+      const fs = await import('fs');
+      const videoBuffer = fs.readFileSync(videoPath);
+      const uploadId = Date.now().toString();
+      
+      // Step 1: Upload the video
+      logger.info('Uploading video...');
+      await this.client.uploadVideo(videoBuffer, {
+        uploadId,
+        isDirect: true,
+        duration: options.duration || 3000,
+        width: options.width || 720,
+        height: options.height || 720
+      });
+      
+      // Step 2: Finish upload processing
+      await this.client.uploadFinish(uploadId, '2', (options.duration || 3000) / 1000.0);
+      
+      // Step 3: Broadcast with upload_id
+      const clientContext = generateUUID();
+      const payload = new URLSearchParams({
+        recipient_users: '[]',
+        action: 'send_item',
+        thread_ids: `["${threadId}"]`,
+        upload_id: uploadId,
+        video_result: '',
+        sampled: 'true',
+        client_context: clientContext,
+        _csrftoken: this.client.cookies.csrftoken,
+        device_id: this.client.deviceId,
+        _uuid: this.client.uuid
+      });
 
-    const data = await this.client.request(
-      '/direct_v2/threads/broadcast/configure_video/',
-      'POST',
-      payload.toString()
-    );
+      const data = await this.client.request(
+        '/direct_v2/threads/broadcast/configure_video/',
+        'POST',
+        payload.toString()
+      );
 
-    return data;
+      logger.success('Video sent successfully');
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to send video: ${error.message}`);
+    }
   }
 
-  async sendVoiceNote(threadId, audioUrl) {
-    const clientContext = generateUUID();
-    
-    const payload = new URLSearchParams({
-      recipient_users: '[]',
-      action: 'send_item',
-      client_context: clientContext,
-      device_id: this.client.deviceId,
-      mutation_token: clientContext,
-      upload_id: generateUUID(),
-      voice_url: audioUrl,
-      thread_ids: `["${threadId}"]`,
-    });
+  async sendVoiceNote(threadId, audioPath, options = {}) {
+    try {
+      const fs = await import('fs');
+      const audioBuffer = fs.readFileSync(audioPath);
+      const uploadId = Date.now().toString();
+      
+      // Step 1: Upload as video with voice parameters
+      logger.info('Uploading voice note...');
+      await this.client.uploadVideo(audioBuffer, {
+        uploadId,
+        isDirectVoice: true,
+        mediaType: '11',
+        duration: options.duration || 3000,
+        width: 0,
+        height: 0
+      });
+      
+      // Step 2: Finish upload
+      await this.client.uploadFinish(uploadId, '4'); // source_type '4' for voice
+      
+      // Step 3: Broadcast voice note
+      const waveform = options.waveform || Array.from(
+        Array(20), 
+        (_, i) => Math.sin(i * (Math.PI / 10)) * 0.5 + 0.5
+      );
+      
+      const clientContext = generateUUID();
+      const payload = new URLSearchParams({
+        recipient_users: '[]',
+        action: 'send_item',
+        thread_ids: `["${threadId}"]`,
+        upload_id: uploadId,
+        waveform: JSON.stringify(waveform),
+        waveform_sampling_frequency_hz: '10',
+        client_context: clientContext,
+        _csrftoken: this.client.cookies.csrftoken,
+        device_id: this.client.deviceId,
+        _uuid: this.client.uuid
+      });
 
-    const data = await this.client.request(
-      '/direct_v2/threads/broadcast/voice/',
-      'POST',
-      payload.toString()
-    );
+      const data = await this.client.request(
+        '/direct_v2/threads/broadcast/share_voice/',
+        'POST',
+        payload.toString()
+      );
 
-    return data;
+      logger.success('Voice note sent successfully');
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to send voice note: ${error.message}`);
+    }
   }
 
   async sendSticker(threadId, stickerId) {

@@ -60,12 +60,16 @@ export default class InstagrapiClient {
     return await this._request('POST', '/direct/send_text', payload);
   }
 
-  async sendPhoto(userIds, photoPath, caption = '') {
+  async sendPhoto(userIds, photoPath, caption = '', threadId = null) {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(photoPath));
     
-    const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
-    userIdArray.forEach(id => formData.append('user_ids', id));
+    if (threadId) {
+      formData.append('thread_id', threadId);
+    } else {
+      const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
+      userIdArray.forEach(id => formData.append('user_ids', id));
+    }
     
     if (caption) formData.append('caption', caption);
 
@@ -74,12 +78,16 @@ export default class InstagrapiClient {
     });
   }
 
-  async sendVideo(userIds, videoPath, caption = '') {
+  async sendVideo(userIds, videoPath, caption = '', threadId = null) {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(videoPath));
     
-    const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
-    userIdArray.forEach(id => formData.append('user_ids', id));
+    if (threadId) {
+      formData.append('thread_id', threadId);
+    } else {
+      const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
+      userIdArray.forEach(id => formData.append('user_ids', id));
+    }
     
     if (caption) formData.append('caption', caption);
 
@@ -88,12 +96,16 @@ export default class InstagrapiClient {
     });
   }
 
-  async sendVoice(userIds, audioPath) {
+  async sendVoice(userIds, audioPath, threadId = null) {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(audioPath));
     
-    const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
-    userIdArray.forEach(id => formData.append('user_ids', id));
+    if (threadId) {
+      formData.append('thread_id', threadId);
+    } else {
+      const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
+      userIdArray.forEach(id => formData.append('user_ids', id));
+    }
 
     return await this._request('POST', '/direct/send_voice', formData, {
       headers: formData.getHeaders()
@@ -116,6 +128,10 @@ export default class InstagrapiClient {
 
   async getUserByUsername(username) {
     return await this._request('GET', `/user/info_by_username/${username}`);
+  }
+
+  async getUserById(userId) {
+    return await this._request('GET', `/users/${userId}`);
   }
 
   async _request(method, endpoint, data = null, options = {}) {

@@ -102,21 +102,38 @@ class InstagramChatAPI extends InstagramClient {
 
   async sendPhoto(threadIdOrUserId, photoPath, caption = '') {
     if (this.mode === 'instagrapi') {
-      return await this.instagrapiClient.sendPhoto(threadIdOrUserId, photoPath, caption);
+      // Detect if it's a thread ID (string with underscore like "340282366841710300949128_123456")
+      // or a user ID (numeric string or array)
+      const isThreadId = typeof threadIdOrUserId === 'string' && threadIdOrUserId.includes('_');
+      if (isThreadId) {
+        return await this.instagrapiClient.sendPhoto(null, photoPath, caption, threadIdOrUserId);
+      } else {
+        return await this.instagrapiClient.sendPhoto(threadIdOrUserId, photoPath, caption);
+      }
     }
     return await this.dm.sendPhoto(threadIdOrUserId, photoPath);
   }
 
   async sendVideo(threadIdOrUserId, videoPath, caption = '') {
     if (this.mode === 'instagrapi') {
-      return await this.instagrapiClient.sendVideo(threadIdOrUserId, videoPath, caption);
+      const isThreadId = typeof threadIdOrUserId === 'string' && threadIdOrUserId.includes('_');
+      if (isThreadId) {
+        return await this.instagrapiClient.sendVideo(null, videoPath, caption, threadIdOrUserId);
+      } else {
+        return await this.instagrapiClient.sendVideo(threadIdOrUserId, videoPath, caption);
+      }
     }
     return await this.dm.sendVideo(threadIdOrUserId, videoPath);
   }
 
   async sendVoiceNote(threadIdOrUserId, audioPath) {
     if (this.mode === 'instagrapi') {
-      return await this.instagrapiClient.sendVoice(threadIdOrUserId, audioPath);
+      const isThreadId = typeof threadIdOrUserId === 'string' && threadIdOrUserId.includes('_');
+      if (isThreadId) {
+        return await this.instagrapiClient.sendVoice(null, audioPath, threadIdOrUserId);
+      } else {
+        return await this.instagrapiClient.sendVoice(threadIdOrUserId, audioPath);
+      }
     }
     return await this.dm.sendVoiceNote(threadIdOrUserId, audioPath);
   }
@@ -276,7 +293,7 @@ class InstagramChatAPI extends InstagramClient {
 
   async getUserInfo(userId) {
     if (this.mode === 'instagrapi') {
-      return await this.instagrapiClient.getProfile();
+      return await this.instagrapiClient.getUserById(userId);
     }
     return await super.getUserInfo(userId);
   }
