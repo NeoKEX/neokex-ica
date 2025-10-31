@@ -1,0 +1,56 @@
+{
+  "name": "neokex-ica",
+  "version": "2.0.0",
+  "description": "Professional Instagram Chat API library for Node.js - 60+ methods for messaging, media uploads, feed, stories, and social automation. Build powerful Instagram bots with ease.",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Run your own tests with your credentials\""
+  },
+  "keywords": [
+    "instagram",
+    "instagram-api",
+    "instagram-bot",
+    "instagram-chat",
+    "instagram-dm",
+    "instagram-automation",
+    "chat-api",
+    "direct-message",
+    "messaging",
+    "automation",
+    "bot",
+    "social-media",
+    "dm-automation",
+    "instagram-client",
+    "neokex"
+  ],
+  "author": "NeoKEX <salneowaz@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NeoKEX/neokex-ica.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NeoKEX/neokex-ica/issues"
+  },
+  "homepage": "https://github.com/NeoKEX/neokex-ica#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE",
+    "EXAMPLES.md"
+  ],
+  "dependencies": {
+    "axios": "^1.6.2",
+    "eventemitter3": "^5.0.1",
+    "form-data": "^4.0.4",
+    "instagram-private-api": "^1.46.1",
+    "sharp": "^0.34.4"
+  }
+}
