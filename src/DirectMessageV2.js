@@ -1,7 +1,8 @@
 import logger from './Logger.js';
 import { sleep } from './utils.js';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 import sharp from 'sharp';
+import axios from 'axios';
 
 export default class DirectMessageV2 {
   constructor(client) {
@@ -241,6 +242,98 @@ export default class DirectMessageV2 {
     } catch (error) {
       logger.error('Failed to send link:', error.message);
       throw new Error(`Failed to send link: ${error.message}`);
+    }
+  }
+
+  async sendPhotoFromUrl(threadId, photoUrl) {
+    let tempFile = null;
+    try {
+      logger.info(`Downloading photo from URL: ${photoUrl}`);
+      
+      // Download the photo
+      const response = await axios.get(photoUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      // Create a temporary file
+      tempFile = `/tmp/photo_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      writeFileSync(tempFile, response.data);
+      
+      logger.info(`Photo downloaded (${(response.data.length / 1024).toFixed(2)}KB), sending...`);
+      
+      // Use the existing sendPhoto method which has retry logic
+      const result = await this.sendPhoto(threadId, tempFile);
+      
+      // Clean up temp file
+      try {
+        unlinkSync(tempFile);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+      
+      return result;
+    } catch (error) {
+      // Clean up temp file on error
+      if (tempFile) {
+        try {
+          unlinkSync(tempFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      
+      logger.error('Failed to send photo from URL:', error.message);
+      throw new Error(`Failed to send photo from URL: ${error.message}`);
+    }
+  }
+
+  async sendVideoFromUrl(threadId, videoUrl) {
+    let tempFile = null;
+    try {
+      logger.info(`Downloading video from URL: ${videoUrl}`);
+      
+      // Download the video
+      const response = await axios.get(videoUrl, {
+        responseType: 'arraybuffer',
+        timeout: 60000, // Longer timeout for videos
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      // Create a temporary file
+      tempFile = `/tmp/video_${Date.now()}_${Math.random().toString(36).substring(7)}.mp4`;
+      writeFileSync(tempFile, response.data);
+      
+      logger.info(`Video downloaded (${(response.data.length / 1024 / 1024).toFixed(2)}MB), sending...`);
+      
+      // Use the existing sendVideo method
+      const result = await this.sendVideo(threadId, tempFile);
+      
+      // Clean up temp file
+      try {
+        unlinkSync(tempFile);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+      
+      return result;
+    } catch (error) {
+      // Clean up temp file on error
+      if (tempFile) {
+        try {
+          unlinkSync(tempFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      
+      logger.error('Failed to send video from URL:', error.message);
+      throw new Error(`Failed to send video from URL: ${error.message}`);
     }
   }
 
