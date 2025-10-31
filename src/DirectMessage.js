@@ -10,14 +10,44 @@ export default class DirectMessage {
   }
 
   async getInbox() {
-    const params = new URLSearchParams({
-      persistentBadging: 'true',
-      folder: '',
-      limit: '20'
-    });
-    const data = await this.client.request(`/direct_v2/inbox/?${params.toString()}`);
-    this.inbox = data.inbox;
-    return data.inbox;
+    try {
+      const params = new URLSearchParams({
+        visual_message_return_type: 'unseen',
+        persistentBadging: 'true',
+        is_prefetching: 'false',
+        folder: '0',
+        limit: '20',
+        thread_message_limit: '10'
+      });
+      const data = await this.client.request(`/direct_v2/inbox/?${params.toString()}`);
+      this.inbox = data.inbox;
+      return data.inbox;
+    } catch (error) {
+      const errorCode = error.errorCode || (error.responseData?.content?.error_code);
+      
+      if (errorCode === 4415001 || error.message.includes('4415001') || error.message.includes('Prompt has contribution')) {
+        logger.warn('Inbox endpoint restricted (error 4415001), trying simplified request...');
+        try {
+          const data = await this.client.request('/direct_v2/inbox/?limit=20');
+          this.inbox = data.inbox;
+          logger.success('Simplified inbox request successful');
+          return data.inbox;
+        } catch (altError) {
+          logger.warn('Simplified inbox failed, trying pending inbox...');
+          try {
+            const pendingData = await this.client.request('/direct_v2/pending_inbox/');
+            this.inbox = pendingData.inbox || { threads: [], pending_requests_total: 0 };
+            logger.info('Using pending inbox as fallback');
+            return this.inbox;
+          } catch (pendingError) {
+            logger.warn('All inbox methods failed, returning empty inbox');
+            this.inbox = { threads: [], pending_requests_total: 0, has_older: false };
+            return this.inbox;
+          }
+        }
+      }
+      throw error;
+    }
   }
 
   async getThread(threadId) {

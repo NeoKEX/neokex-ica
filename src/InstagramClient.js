@@ -290,6 +290,7 @@ export default class InstagramClient extends EventEmitter {
         const errorType = response.data?.error_type || 'unknown';
         const statusType = response.data?.status || 'unknown';
         const errorMsg = response.data?.message || `Request failed with status ${response.status}`;
+        const errorCode = response.data?.content?.error_code || response.data?.error_code;
         
         if (response.data?.challenge) {
           const challengeUrl = response.data.challenge?.api_path || response.data.challenge?.url || 'unknown';
@@ -299,7 +300,12 @@ export default class InstagramClient extends EventEmitter {
         
         logger.error('API request failed', { errorType, statusType, message: errorMsg });
         logger.debug('Full response data', response.data);
-        throw new Error(`Request failed (${errorType}, status: ${statusType}): ${errorMsg}`);
+        
+        const error = new Error(`Request failed (${errorType}, status: ${statusType}): ${errorMsg}`);
+        error.errorCode = errorCode;
+        error.statusCode = response.status;
+        error.responseData = response.data;
+        throw error;
       }
 
       return response.data;
@@ -312,7 +318,17 @@ export default class InstagramClient extends EventEmitter {
         });
       }
       
+      if (error.errorCode || error.responseData) {
+        this.emit('error', error);
+        throw error;
+      }
+      
       const normalizedError = new Error(error.response?.data?.message || error.message);
+      if (error.response?.data) {
+        normalizedError.errorCode = error.response.data.content?.error_code || error.response.data.error_code;
+        normalizedError.responseData = error.response.data;
+        normalizedError.statusCode = error.response.status;
+      }
       this.emit('error', normalizedError);
       throw normalizedError;
     }
