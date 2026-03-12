@@ -9,7 +9,6 @@ import { readFileSync } from 'fs';
 import sharp from 'sharp';
 import logger from '../logger.js';
 export class ProfileAPI {
-    ig;
     constructor(ig) {
         this.ig = ig;
     }

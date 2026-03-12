@@ -18,7 +18,6 @@ const COLORS = {
     white: '\x1b[37m',
 };
 class Logger {
-    prefix;
     constructor(prefix = 'ica-neokex') {
         this.prefix = prefix;
     }

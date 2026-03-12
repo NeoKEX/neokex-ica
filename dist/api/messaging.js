@@ -9,10 +9,6 @@ import logger from '../logger.js';
 import { withRetry } from '../utils/retry.js';
 import { sleep } from '../utils/sleep.js';
 export class MessagingAPI {
-    ig;
-    emitter;
-    replyHandlers;
-    trackSeen;
     constructor(ig, emitter, replyHandlers, trackSeen) {
         this.ig = ig;
         this.emitter = emitter;
@@ -22,9 +18,9 @@ export class MessagingAPI {
     parseResult(raw) {
         const payload = raw?.['payload'];
         return {
-            item_id: (payload?.['item_id'] ?? raw['item_id'] ?? ''),
-            thread_id: (payload?.['thread_id'] ?? raw['thread_id'] ?? ''),
-            timestamp: (payload?.['timestamp'] ?? raw['timestamp'] ?? Date.now().toString()),
+            item_id: payload?.['item_id'] ?? raw['item_id'] ?? '',
+            thread_id: payload?.['thread_id'] ?? raw['thread_id'] ?? '',
+            timestamp: payload?.['timestamp'] ?? raw['timestamp'] ?? Date.now().toString(),
             status: 'sent',
         };
     }
@@ -33,10 +29,8 @@ export class MessagingAPI {
         return withRetry(async () => {
             const thread = this.ig.entity.directThread(threadId);
             const raw = options.replyToItemId
-                ? await thread
-                    .broadcastText(text, { replyToMessageId: options.replyToItemId })
-                : await thread
-                    .broadcastText(text);
+                ? await thread.broadcastText(text, { replyToMessageId: options.replyToItemId })
+                : await thread.broadcastText(text);
             const result = this.parseResult(raw);
             result.text = text;
             if (result.item_id)
@@ -72,10 +66,10 @@ export class MessagingAPI {
             const threadId = targets[i];
             try {
                 const result = await this.sendMessage(threadId, text);
-                results.push({ threadId: threadId, success: true, result });
+                results.push({ threadId, success: true, result });
             }
             catch (error) {
-                results.push({ threadId: threadId, success: false, error: error.message });
+                results.push({ threadId, success: false, error: error.message });
             }
             if (i < targets.length - 1 && delay > 0)
                 await sleep(delay);
@@ -133,19 +127,19 @@ export class MessagingAPI {
     }
     // ─── Message actions ───────────────────────────────────────────────────────
     async unsendMessage(threadId, itemId) {
-        await this.ig.entity.directThread(threadId)
-            .deleteItem(itemId);
+        await this.ig.entity.directThread(threadId).deleteItem(itemId);
         this.clearReplyHandler(itemId);
         logger.info(`Message ${itemId} unsent`);
     }
     async editMessage(threadId, itemId, newText) {
-        await this.ig.entity.directThread(threadId)
-            .editMessage(itemId, newText);
+        await this.ig.entity.directThread(threadId).editMessage(itemId, newText);
         logger.info(`Message ${itemId} edited`);
         return { success: true, item_id: itemId, new_text: newText };
     }
     async sendReaction(threadId, itemId, emoji) {
-        await this.ig.entity.directThread(threadId).broadcastReaction({ item_id: itemId, emoji_type: 'emoji', reaction: emoji });
+        await this.ig.entity.directThread(threadId).broadcastReaction({
+            item_id: itemId, emoji_type: 'emoji', reaction: emoji,
+        });
         logger.info(`Reaction "${emoji}" sent to message ${itemId}`);
     }
     async removeReaction(threadId, itemId) {

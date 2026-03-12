@@ -5,12 +5,14 @@
  * @author NeoKEX (https://github.com/NeoKEX)
  * @license MIT
  */
-import type { ErrorKind } from '../types/index.js';
 /**
  * Convert milliseconds to a human-readable uptime string.
  * e.g. `formatUptime(3665000)` → `"1h 1m 5s"`
+ *
+ * @param {number} ms
+ * @returns {string}
  */
-export declare function formatUptime(ms: number): string;
+export function formatUptime(ms: number): string;
 /**
  * Classify an error into one of four categories used for retry-backoff decisions.
  *
@@ -18,6 +20,9 @@ export declare function formatUptime(ms: number): string;
  * - `ratelimit` — HTTP 429, throttle, rate-limit
  * - `network`   — HTTP 5xx, ECONNREFUSED, timeout, ENOTFOUND
  * - `unknown`   — anything else
+ *
+ * @param {unknown} error
+ * @returns {'auth'|'ratelimit'|'network'|'unknown'}
  */
-export declare function classifyError(error: unknown): ErrorKind;
+export function classifyError(error: unknown): "auth" | "ratelimit" | "network" | "unknown";
 //# sourceMappingURL=format.d.ts.map

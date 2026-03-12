@@ -7,14 +7,13 @@
  */
 import logger from '../logger.js';
 export class SearchAPI {
-    ig;
     constructor(ig) {
         this.ig = ig;
     }
     async searchHashtags(query) {
         try {
             const results = await this.ig.search.tags(query);
-            return (results['results'] ?? results ?? []);
+            return results['results'] ?? results ?? [];
         }
         catch (error) {
             logger.error('Failed to search hashtags:', error.message);
@@ -24,7 +23,7 @@ export class SearchAPI {
     async searchLocations(query) {
         try {
             const results = await this.ig.search.places(query);
-            return (results['items'] ?? results ?? []);
+            return results['items'] ?? results ?? [];
         }
         catch (error) {
             logger.error('Failed to search locations:', error.message);

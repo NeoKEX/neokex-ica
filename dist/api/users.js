@@ -8,7 +8,6 @@
 import logger from '../logger.js';
 import { sleep } from '../utils/sleep.js';
 export class UsersAPI {
-    ig;
     constructor(ig) {
         this.ig = ig;
     }
@@ -35,7 +34,7 @@ export class UsersAPI {
     async searchUsers(query) {
         try {
             const results = await this.ig.search.users(query);
-            return (results['users'] ?? results ?? []);
+            return results['users'] ?? results ?? [];
         }
         catch (error) {
             logger.error('Search failed:', error.message);

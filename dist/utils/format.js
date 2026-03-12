@@ -8,6 +8,9 @@
 /**
  * Convert milliseconds to a human-readable uptime string.
  * e.g. `formatUptime(3665000)` → `"1h 1m 5s"`
+ *
+ * @param {number} ms
+ * @returns {string}
  */
 export function formatUptime(ms) {
     const totalSeconds = Math.floor(ms / 1000);
@@ -29,12 +32,14 @@ export function formatUptime(ms) {
  * - `ratelimit` — HTTP 429, throttle, rate-limit
  * - `network`   — HTTP 5xx, ECONNREFUSED, timeout, ENOTFOUND
  * - `unknown`   — anything else
+ *
+ * @param {unknown} error
+ * @returns {'auth'|'ratelimit'|'network'|'unknown'}
  */
 export function classifyError(error) {
     const raw = error;
     const msg = (typeof raw?.message === 'string' ? raw.message : String(error)).toLowerCase();
-    const status = raw?.response?.status
-        ?? raw?.statusCode;
+    const status = raw?.response?.status ?? raw?.statusCode;
     if (status === 401 ||
         msg.includes('login_required') ||
         msg.includes('not authenticated') ||

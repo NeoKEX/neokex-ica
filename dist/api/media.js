@@ -15,8 +15,6 @@ import { sleep } from '../utils/sleep.js';
 const DOWNLOAD_TIMEOUT = 45_000;
 const PHOTO_MAX_BYTES = 8 * 1024 * 1024;
 export class MediaAPI {
-    ig;
-    trackSeen;
     constructor(ig, trackSeen) {
         this.ig = ig;
         this.trackSeen = trackSeen;
@@ -25,9 +23,9 @@ export class MediaAPI {
         const r = raw;
         const p = r?.['payload'];
         return {
-            item_id: (p?.['item_id'] ?? r['item_id'] ?? ''),
-            thread_id: (p?.['thread_id'] ?? r['thread_id'] ?? ''),
-            timestamp: (p?.['timestamp'] ?? r['timestamp'] ?? Date.now().toString()),
+            item_id: p?.['item_id'] ?? r['item_id'] ?? '',
+            thread_id: p?.['thread_id'] ?? r['thread_id'] ?? '',
+            timestamp: p?.['timestamp'] ?? r['timestamp'] ?? Date.now().toString(),
         };
     }
     track(raw) {
@@ -69,8 +67,7 @@ export class MediaAPI {
         const result = await this.sendPhoto(threadId, photoPath);
         if (caption) {
             await sleep(400);
-            await this.ig.entity.directThread(threadId)
-                .broadcastText(caption);
+            await this.ig.entity.directThread(threadId).broadcastText(caption);
         }
         return result;
     }
@@ -172,8 +169,7 @@ export class MediaAPI {
             const vv = media['video_versions'];
             if (vv) {
                 out.media.videos = vv.map((v) => ({
-                    url: v['url'], width: v['width'],
-                    height: v['height'], type: v['type'],
+                    url: v['url'], width: v['width'], height: v['height'], type: v['type'],
                 }));
             }
             const carousel = media['carousel_media'];

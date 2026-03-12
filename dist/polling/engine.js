@@ -22,31 +22,28 @@ const SEEN_IDS_MAX = 5_000;
 const SEEN_IDS_EVICT = 2_500;
 const POLL_TIMEOUT_MS = 20_000;
 export class PollingEngine {
-    ig;
-    client;
-    // ─── State ─────────────────────────────────────────────────────────────────
-    isPolling = false;
-    isSeeded = false;
-    shutdownBound = false;
-    seenMessageIds = new Set();
-    seenIdTimestamps = new Map();
-    threadLastItemMap = new Map();
-    replyHandlers = new Map();
-    stats = {
-        startedAt: null,
-        totalPolls: 0,
-        totalErrors: 0,
-        consecutiveErrors: 0,
-        lastPollAt: null,
-        lastErrorAt: null,
-        lastErrorMsg: null,
-        circuitOpen: false,
-        circuitOpenedAt: null,
-        currentInterval: 5_000,
-    };
     constructor(ig, client) {
         this.ig = ig;
         this.client = client;
+        this.isPolling = false;
+        this.isSeeded = false;
+        this.shutdownBound = false;
+        this.seenMessageIds = new Set();
+        this.seenIdTimestamps = new Map();
+        this.threadLastItemMap = new Map();
+        this.replyHandlers = new Map();
+        this.stats = {
+            startedAt: null,
+            totalPolls: 0,
+            totalErrors: 0,
+            consecutiveErrors: 0,
+            lastPollAt: null,
+            lastErrorAt: null,
+            lastErrorMsg: null,
+            circuitOpen: false,
+            circuitOpenedAt: null,
+            currentInterval: 5_000,
+        };
     }
     // ─── Seen-ID management ────────────────────────────────────────────────────
     trackSeen(itemId) {

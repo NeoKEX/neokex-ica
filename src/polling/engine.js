@@ -14,68 +14,52 @@
  * @license MIT
  */
 
-import type { IgApiClient } from 'instagram-private-api';
-/** Minimal client interface accepted by PollingEngine. */
-interface IClient {
-  userId: string | null;
-  emit(event: string, ...args: unknown[]): boolean | void;
-}
-import logger               from '../logger.js';
-import { sleep }            from '../utils/sleep.js';
-import { withTimeout }      from '../utils/timeout.js';
-import { classifyError, formatUptime } from '../utils/format.js';
-import { exponentialBackoff }          from '../utils/retry.js';
-import type {
-  PollingOptions,
-  PollingStats,
-  ReplyHandlerEntry,
-  MessageEvent,
-  Thread,
-  RawMessageItem,
-} from '../types/index.js';
+import logger                              from '../logger.js';
+import { sleep }                           from '../utils/sleep.js';
+import { withTimeout }                     from '../utils/timeout.js';
+import { classifyError, formatUptime }     from '../utils/format.js';
+import { exponentialBackoff }              from '../utils/retry.js';
 
 const SEEN_IDS_MAX    = 5_000;
 const SEEN_IDS_EVICT  = 2_500;
 const POLL_TIMEOUT_MS = 20_000;
 
 export class PollingEngine {
-  // ─── State ─────────────────────────────────────────────────────────────────
-  isPolling   = false;
-  private isSeeded        = false;
-  private shutdownBound   = false;
+  constructor(ig, client) {
+    this.ig             = ig;
+    this.client         = client;
+    this.isPolling      = false;
+    this.isSeeded       = false;
+    this.shutdownBound  = false;
 
-  private seenMessageIds:   Set<string>         = new Set();
-  private seenIdTimestamps: Map<string, number>  = new Map();
-  private threadLastItemMap: Map<string, string> = new Map();
-  readonly replyHandlers:   Map<string, ReplyHandlerEntry> = new Map();
+    this.seenMessageIds    = new Set();
+    this.seenIdTimestamps  = new Map();
+    this.threadLastItemMap = new Map();
+    this.replyHandlers     = new Map();
 
-  private stats = {
-    startedAt:         null as number | null,
-    totalPolls:        0,
-    totalErrors:       0,
-    consecutiveErrors: 0,
-    lastPollAt:        null as number | null,
-    lastErrorAt:       null as number | null,
-    lastErrorMsg:      null as string | null,
-    circuitOpen:       false,
-    circuitOpenedAt:   null as number | null,
-    currentInterval:   5_000,
-  };
-
-  constructor(
-    private readonly ig:      IgApiClient,
-    private readonly client:  IClient,
-  ) {}
+    this.stats = {
+      startedAt:         null,
+      totalPolls:        0,
+      totalErrors:       0,
+      consecutiveErrors: 0,
+      lastPollAt:        null,
+      lastErrorAt:       null,
+      lastErrorMsg:      null,
+      circuitOpen:       false,
+      circuitOpenedAt:   null,
+      currentInterval:   5_000,
+    };
+  }
 
   // ─── Seen-ID management ────────────────────────────────────────────────────
 
-  trackSeen(itemId: string): void {
+  trackSeen(itemId) {
     this.seenMessageIds.add(itemId);
     this.seenIdTimestamps.set(itemId, Date.now());
     this.evictOldSeenIds();
   }
 
-  private evictOldSeenIds(): void {
+  evictOldSeenIds() {
     if (this.seenMessageIds.size <= SEEN_IDS_MAX) return;
 
     const sorted = [...this.seenIdTimestamps.entries()]
@@ -91,7 +75,7 @@ export class PollingEngine {
 
   // ─── Reply-handler sweep ───────────────────────────────────────────────────
 
-  sweepExpiredReplyHandlers(maxAge = 300_000): void {
+  sweepExpiredReplyHandlers(maxAge = 300_000) {
     const now = Date.now();
     let swept = 0;
     for (const [id, entry] of this.replyHandlers) {
@@ -106,7 +90,7 @@ export class PollingEngine {
 
   // ─── Observability ─────────────────────────────────────────────────────────
 
-  getPollingStats(): PollingStats {
+  getPollingStats() {
     const uptime = this.stats.startedAt ? Date.now() - this.stats.startedAt : 0;
     return {
       ...this.stats,
@@ -120,11 +104,11 @@ export class PollingEngine {
 
   // ─── Shutdown handlers ─────────────────────────────────────────────────────
 
-  private registerShutdownHandlers(): void {
+  registerShutdownHandlers() {
     if (this.shutdownBound) return;
     this.shutdownBound = true;
 
-    const shutdown = async (signal: string) => {
+    const shutdown = async (signal) => {
       logger.warn(`Received ${signal} — stopping bot gracefully...`);
       this.stopPolling();
       this.client.emit('shutdown', { signal });
@@ -135,11 +119,11 @@ export class PollingEngine {
     process.once('SIGTERM', () => void shutdown('SIGTERM'));
     process.once('SIGINT',  () => void shutdown('SIGINT'));
 
-    process.on('uncaughtException', (err: Error) => {
+    process.on('uncaughtException', (err) => {
       logger.error('Uncaught exception:', err.message);
       this.client.emit('error', err);
     });
-    process.on('unhandledRejection', (reason: unknown) => {
+    process.on('unhandledRejection', (reason) => {
       const msg = String(reason);
       logger.error('Unhandled rejection:', msg);
       this.client.emit('error', new Error(msg));
@@ -148,11 +132,11 @@ export class PollingEngine {
 
   // ─── Seed ──────────────────────────────────────────────────────────────────
 
-  private async seedSeenIds(): Promise<void> {
+  async seedSeenIds() {
     try {
       logger.info('Seeding existing message IDs...');
       const feed    = this.ig.feed.directInbox();
-      const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'seed') as unknown as Thread[];
+      const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'seed');
 
       for (const thread of threads) {
         const last = thread.last_permanent_item;
@@ -170,16 +154,16 @@ export class PollingEngine {
         `Seeded ${this.seenMessageIds.size} message IDs across ${threads.length} threads`,
       );
     } catch (err) {
-      logger.warn('Could not seed message IDs:', (err as Error).message);
+      logger.warn('Could not seed message IDs:', err.message);
       this.isSeeded = true;
     }
   }
 
   // ─── Poll cycle ────────────────────────────────────────────────────────────
 
-  private async pollCycle(): Promise<boolean> {
+  async pollCycle() {
     const feed    = this.ig.feed.directInbox();
-    const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'inbox') as unknown as Thread[];
+    const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'inbox');
     if (!threads.length) return false;
 
     let hadActivity = false;
@@ -194,41 +178,41 @@ export class PollingEngine {
 
       this.threadLastItemMap.set(threadId, lastPerm.item_id);
 
-      for (const item of (thread.items ?? []) as RawMessageItem[]) {
+      for (const item of (thread.items ?? [])) {
         if (!item?.item_id || this.seenMessageIds.has(item.item_id)) continue;
         this.trackSeen(item.item_id);
 
         const isFromMe = String(item.user_id) === String(this.client.userId);
 
-        const event: MessageEvent = {
+        const event = {
           thread_id:    threadId,
           item_id:      item.item_id,
           user_id:      item.user_id ?? '',
-          text:         (item.text as string) ?? '',
-          timestamp:    (item.timestamp as string) ?? '',
+          text:         item.text ?? '',
+          timestamp:    item.timestamp ?? '',
           is_from_me:   isFromMe,
-          thread_title: (thread.thread_title as string | undefined) ?? null,
-          thread_users: (thread.users as unknown[]) ?? [],
+          thread_title: thread.thread_title ?? null,
+          thread_users: thread.users ?? [],
           message:      item,
         };
 
         const replied = item.replied_to_message;
         if (replied?.item_id) {
           event.messageReply = {
-            item_id:   replied.item_id as string,
-            text:      (replied.text as string) ?? '',
-            user_id:   (replied.user_id as string) ?? '',
-            timestamp: (replied.timestamp as string) ?? '',
+            item_id:   replied.item_id,
+            text:      replied.text ?? '',
+            user_id:   replied.user_id ?? '',
+            timestamp: replied.timestamp ?? '',
           };
 
-          const handler = this.replyHandlers.get(replied.item_id as string);
+          const handler = this.replyHandlers.get(replied.item_id);
           if (handler) {
             try {
               await handler.callback(event);
               clearTimeout(handler.timerId);
-              this.replyHandlers.delete(replied.item_id as string);
+              this.replyHandlers.delete(replied.item_id);
             } catch (err) {
-              logger.error('Reply handler error:', (err as Error).message);
+              logger.error('Reply handler error:', err.message);
             }
           }
         }
@@ -238,7 +222,7 @@ export class PollingEngine {
         if (!isFromMe) {
           hadActivity = true;
           logger.debug(
-            `New msg in ${threadId} from ${item.user_id}: ${((item.text as string) ?? '(media)').substring(0, 60)}`,
+            `New msg in ${threadId} from ${item.user_id}: ${(item.text ?? '(media)').substring(0, 60)}`,
           );
         }
       }
@@ -247,7 +231,7 @@ export class PollingEngine {
     // Check pending DMs
     try {
       const pending = this.ig.feed.directPending();
-      const pthr    = await pending.items() as unknown as Thread[];
+      const pthr    = await pending.items();
       if (pthr.length > 0) {
         this.client.emit('pending_request', { count: pthr.length, threads: pthr });
       }
@@ -258,10 +242,10 @@ export class PollingEngine {
 
   // ─── Polling control ───────────────────────────────────────────────────────
 
-  async startPolling(options: PollingOptions | number = 5_000): Promise<void> {
+  async startPolling(options = 5_000) {
     if (this.isPolling) { logger.warn('Polling already active'); return; }
 
-    const opts: PollingOptions = typeof options === 'number' ? { interval: options } : options;
+    const opts = typeof options === 'number' ? { interval: options } : options;
     const {
       interval             = 5_000,
       minInterval          = 3_000,
@@ -270,11 +254,11 @@ export class PollingEngine {
       circuitCooldown      = 60_000,
     } = opts;
 
-    this.isPolling                 = true;
-    this.stats.startedAt           = Date.now();
-    this.stats.currentInterval     = interval;
-    this.stats.circuitOpen         = false;
-    this.stats.consecutiveErrors   = 0;
+    this.isPolling               = true;
+    this.stats.startedAt         = Date.now();
+    this.stats.currentInterval   = interval;
+    this.stats.circuitOpen       = false;
+    this.stats.consecutiveErrors = 0;
 
     this.registerShutdownHandlers();
     if (!this.isSeeded) await this.seedSeenIds();
@@ -323,7 +307,7 @@ export class PollingEngine {
         this.stats.totalErrors++;
         this.stats.consecutiveErrors++;
         this.stats.lastErrorAt  = Date.now();
-        this.stats.lastErrorMsg = (error as Error).message;
+        this.stats.lastErrorMsg = error.message;
 
         const kind = classifyError(error);
 
@@ -334,8 +318,8 @@ export class PollingEngine {
           break;
         }
 
-        logger.error(`Poll error #${this.stats.consecutiveErrors} [${kind}]: ${(error as Error).message}`);
-        this.client.emit('error', error as Error);
+        logger.error(`Poll error #${this.stats.consecutiveErrors} [${kind}]: ${error.message}`);
+        this.client.emit('error', error);
 
         if (this.stats.consecutiveErrors >= maxConsecutiveErrors) {
           this.stats.circuitOpen     = true;
@@ -362,13 +346,13 @@ export class PollingEngine {
     this.client.emit('polling:stop', this.getPollingStats());
   }
 
-  stopPolling(): void {
+  stopPolling() {
     if (!this.isPolling) return;
     this.isPolling = false;
     logger.event('Polling stop requested');
   }
 
-  async restartPolling(options?: PollingOptions | number): Promise<void> {
+  async restartPolling(options) {
     this.stopPolling();
     await sleep(1_000);
     this.isSeeded = false;

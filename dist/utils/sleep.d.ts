@@ -7,6 +7,8 @@
  */
 /**
  * Pause execution for the given number of milliseconds.
+ * @param {number} ms
+ * @returns {Promise<void>}
  */
-export declare function sleep(ms: number): Promise<void>;
+export function sleep(ms: number): Promise<void>;
 //# sourceMappingURL=sleep.d.ts.map

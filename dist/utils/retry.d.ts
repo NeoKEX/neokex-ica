@@ -1,19 +1,12 @@
 /**
- * @module utils/retry
- * Exponential-backoff retry with per-error-kind delays.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import type { RetryOptions } from '../types/index.js';
-/**
  * Calculate a jitter-augmented exponential-backoff delay.
  *
- * @param attempt - Current attempt number (1-based).
- * @param base    - Base delay in ms. Default: 2000
- * @param max     - Maximum delay cap in ms. Default: 60000
+ * @param {number} attempt - Current attempt number (1-based).
+ * @param {number} [base=2000]  - Base delay in ms.
+ * @param {number} [max=60000]  - Maximum delay cap in ms.
+ * @returns {number}
  */
-export declare function exponentialBackoff(attempt: number, base?: number, max?: number): number;
+export function exponentialBackoff(attempt: number, base?: number, max?: number): number;
 /**
  * Execute `fn` with automatic retries and exponential backoff.
  *
@@ -21,8 +14,13 @@ export declare function exponentialBackoff(attempt: number, base?: number, max?:
  * - Rate-limit errors use a longer base delay (10s–120s).
  * - Network / unknown errors use a shorter base delay (2s–30s).
  *
- * @param fn      - Async function to execute.
- * @param options - Retry configuration.
+ * @param {() => Promise<unknown>} fn - Async function to execute.
+ * @param {{maxRetries?: number, label?: string, onRetry?: function}} [options={}]
+ * @returns {Promise<unknown>}
  */
-export declare function withRetry<T>(fn: () => Promise<T>, options?: RetryOptions): Promise<T>;
+export function withRetry(fn: () => Promise<unknown>, options?: {
+    maxRetries?: number;
+    label?: string;
+    onRetry?: Function;
+}): Promise<unknown>;
 //# sourceMappingURL=retry.d.ts.map

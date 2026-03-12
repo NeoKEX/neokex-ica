@@ -9,6 +9,8 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 export class CookieManager {
     /**
      * Parse a Netscape-format cookie file into a key/value map.
+     * @param {string} content
+     * @returns {Record<string,string>}
      */
     static parseNetscape(content) {
         const cookies = {};
@@ -33,6 +35,8 @@ export class CookieManager {
     /**
      * Load cookies from a Netscape-format file on disk.
      * Throws if the file does not exist.
+     * @param {string} filePath
+     * @returns {Record<string,string>}
      */
     static loadFromFile(filePath) {
         if (!existsSync(filePath))
@@ -41,6 +45,9 @@ export class CookieManager {
     }
     /**
      * Serialise a cookie map back to a Netscape-format file.
+     * @param {string} filePath
+     * @param {Record<string,string>} cookies
+     * @param {string} [domain='.instagram.com']
      */
     static saveToFile(filePath, cookies, domain = '.instagram.com') {
         const expiry = Math.floor(Date.now() / 1000) + 365 * 86400;
@@ -55,6 +62,8 @@ export class CookieManager {
     }
     /**
      * Render a cookie map as a `Cookie` header string.
+     * @param {Record<string,string>} cookies
+     * @returns {string}
      */
     static toString(cookies) {
         return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');

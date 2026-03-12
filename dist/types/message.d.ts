@@ -1,18 +1,17 @@
-/**
- * @module types/message
- * Message and send operation type definitions.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-export interface SendResult {
+export type SendResult = {
     item_id: string;
     thread_id: string;
     timestamp: string;
-    text?: string;
-    status: 'sent' | 'failed';
-}
-export interface MessageEvent {
+    text?: string | undefined;
+    status: "sent" | "failed";
+};
+export type MessageReply = {
+    item_id: string;
+    text: string;
+    user_id: string | number;
+    timestamp: string;
+};
+export type MessageEvent = {
     thread_id: string;
     item_id: string;
     user_id: string | number;
@@ -21,71 +20,42 @@ export interface MessageEvent {
     is_from_me: boolean;
     thread_title: string | null;
     thread_users: unknown[];
-    /** Raw item from instagram-private-api */
     message: RawMessageItem;
-    /** Present if this message was a reply to another */
-    messageReply?: MessageReply;
-}
-export interface MessageReply {
-    item_id: string;
-    text: string;
-    user_id: string | number;
-    timestamp: string;
-}
-export interface RawMessageItem {
-    item_id?: string;
-    user_id?: string | number;
-    text?: string;
-    timestamp?: string;
-    item_type?: string;
+    messageReply?: MessageReply | undefined;
+};
+export type RawMessageItem = {
+    item_id?: string | undefined;
+    user_id?: string | number | undefined;
+    text?: string | undefined;
+    timestamp?: string | undefined;
+    item_type?: string | undefined;
     media?: unknown;
-    replied_to_message?: RawMessageItem;
-    [key: string]: unknown;
-}
-export interface BulkSendResult {
+    replied_to_message?: RawMessageItem | undefined;
+};
+export type BulkSendResult = {
     threadId: string;
     success: boolean;
-    result?: SendResult;
-    error?: string;
-}
-export interface ScheduledMessage extends Promise<SendResult> {
-    /** Cancel the scheduled message before it fires. */
+    result?: SendResult | undefined;
+    error?: string | undefined;
+};
+export type ScheduledMessage = Promise<SendResult> & {
     cancel: () => void;
-}
-export interface ReplyHandlerEntry {
+};
+export type ReplyHandlerEntry = {
     callback: ReplyCallback;
-    timerId: ReturnType<typeof setTimeout>;
+    timerId: any;
     registeredAt: number;
-}
-export type ReplyCallback = (event: MessageEvent) => void | Promise<void>;
-export interface MediaInfo {
+};
+export type ReplyCallback = (arg0: MessageEvent) => void | Promise<void>;
+export type MediaInfo = {
     item_id: string;
-    item_type: string | undefined;
-    media: {
-        id?: string;
-        media_type?: number;
-        images?: Array<{
-            url: string;
-            width: number;
-            height: number;
-        }>;
-        videos?: Array<{
-            url: string;
-            width: number;
-            height: number;
-            type: number;
-        }>;
-        carousel?: Array<{
-            id: string;
-            images?: unknown[];
-            videos?: unknown[];
-        }>;
-    } | null;
-}
-export interface DownloadedMedia {
+    item_type?: string | undefined;
+    media: object | null;
+};
+export type DownloadedMedia = {
     path: string;
     size: number;
     type: string;
     url: string;
-}
+};
 //# sourceMappingURL=message.d.ts.map

@@ -1,45 +1,54 @@
-/**
- * @module types/options
- * Configuration and option type definitions.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-export interface PollingOptions {
-    /** Starting poll interval in ms. Default: 5000 */
-    interval?: number;
-    /** Minimum poll interval (floor for adaptive scaling). Default: 3000 */
-    minInterval?: number;
-    /** Maximum poll interval (ceiling for adaptive scaling). Default: 30000 */
-    maxInterval?: number;
-    /** Number of consecutive errors before circuit breaker opens. Default: 5 */
-    maxConsecutiveErrors?: number;
-    /** Milliseconds the circuit breaker stays open before attempting recovery. Default: 60000 */
-    circuitCooldown?: number;
-}
-export interface SendOptions {
-    /** Reply to a specific message item ID. */
-    replyToItemId?: string;
-    /** Timeout (ms) for the onReply handler before it is auto-cleared. Default: 120000 */
-    replyTimeout?: number;
-}
-export interface BulkSendOptions {
-    /** Delay in ms between each send. Default: 1500 */
-    delay?: number;
-}
-export interface EditProfileOptions {
-    username?: string;
-    name?: string;
-    fullName?: string;
-    biography?: string;
-    bio?: string;
-    email?: string;
-    phone?: string;
-    website?: string;
-    externalUrl?: string;
-    gender?: number;
-}
-export interface PollingStats {
+export type PollingOptions = {
+    /**
+     * Starting poll interval in ms.
+     */
+    interval?: number | undefined;
+    /**
+     * Minimum poll interval.
+     */
+    minInterval?: number | undefined;
+    /**
+     * Maximum poll interval.
+     */
+    maxInterval?: number | undefined;
+    /**
+     * Errors before circuit breaker opens.
+     */
+    maxConsecutiveErrors?: number | undefined;
+    /**
+     * Circuit breaker cooldown ms.
+     */
+    circuitCooldown?: number | undefined;
+};
+export type SendOptions = {
+    /**
+     * Reply to a specific message item ID.
+     */
+    replyToItemId?: string | undefined;
+    /**
+     * Timeout ms for the onReply handler.
+     */
+    replyTimeout?: number | undefined;
+};
+export type BulkSendOptions = {
+    /**
+     * Delay in ms between each send.
+     */
+    delay?: number | undefined;
+};
+export type EditProfileOptions = {
+    username?: string | undefined;
+    name?: string | undefined;
+    fullName?: string | undefined;
+    biography?: string | undefined;
+    bio?: string | undefined;
+    email?: string | undefined;
+    phone?: string | undefined;
+    website?: string | undefined;
+    externalUrl?: string | undefined;
+    gender?: number | undefined;
+};
+export type PollingStats = {
     startedAt: number | null;
     totalPolls: number;
     totalErrors: number;
@@ -55,29 +64,11 @@ export interface PollingStats {
     seenIdCount: number;
     replyHandlerCount: number;
     trackedThreads: number;
-}
-export interface BotStatus {
-    isLoggedIn: boolean;
-    userId: string | null;
-    username: string | null;
-    isPolling: boolean;
-    pollingStats: PollingStats;
-}
-export interface ClientOptions {
-    /** Set to false to suppress the startup banner. Default: true */
-    showBanner?: boolean;
-}
-export type ErrorKind = 'auth' | 'ratelimit' | 'network' | 'unknown';
-export interface RetryOptions {
-    maxRetries?: number;
-    label?: string;
-    onRetry?: (info: {
-        attempt: number;
-        maxRetries: number;
-        delay: number;
-        error: Error;
-        kind: ErrorKind;
-        label: string;
-    }) => void;
-}
+};
+export type RetryOptions = {
+    maxRetries?: number | undefined;
+    label?: string | undefined;
+    onRetry?: Function | undefined;
+};
+export type ErrorKind = "auth" | "ratelimit" | "network" | "unknown";
 //# sourceMappingURL=options.d.ts.map

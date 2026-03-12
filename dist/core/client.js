@@ -10,14 +10,13 @@ import { EventEmitter } from 'events';
 import logger from '../logger.js';
 import { CookieManager } from './cookies.js';
 export class InstagramCore extends EventEmitter {
-    ig;
-    userId = null;
-    username = null;
-    isLoggedIn = false;
-    cookies = {};
     constructor() {
         super();
         this.ig = new IgApiClient();
+        this.userId = null;
+        this.username = null;
+        this.isLoggedIn = false;
+        this.cookies = {};
     }
     // ─── Authentication ────────────────────────────────────────────────────────
     async login(username, password) {

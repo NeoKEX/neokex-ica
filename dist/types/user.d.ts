@@ -1,25 +1,17 @@
-/**
- * @module types/user
- * User and social relationship type definitions.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-export interface UserInfo {
+export type UserInfo = {
     pk: number | string;
     username: string;
     full_name: string;
-    biography?: string;
-    external_url?: string;
-    follower_count?: number;
-    following_count?: number;
-    media_count?: number;
-    is_private?: boolean;
-    is_verified?: boolean;
-    profile_pic_url?: string;
-    [key: string]: unknown;
-}
-export interface FriendshipStatus {
+    biography?: string | undefined;
+    external_url?: string | undefined;
+    follower_count?: number | undefined;
+    following_count?: number | undefined;
+    media_count?: number | undefined;
+    is_private?: boolean | undefined;
+    is_verified?: boolean | undefined;
+    profile_pic_url?: string | undefined;
+};
+export type FriendshipStatus = {
     following: boolean;
     followed_by: boolean;
     blocking: boolean;
@@ -27,24 +19,23 @@ export interface FriendshipStatus {
     is_private: boolean;
     incoming_request: boolean;
     outgoing_request: boolean;
-    [key: string]: unknown;
-}
-export interface SessionState {
+};
+export type SessionState = {
     cookies: Record<string, string>;
     userId: string | null;
     username: string | null;
-    deviceId?: string;
-    uuid?: string;
-}
-export interface SessionValidationResult {
+    deviceId?: string | undefined;
+    uuid?: string | undefined;
+};
+export type SessionValidationResult = {
     valid: boolean;
-    userId?: string | null;
-    username?: string | null;
-    error?: string;
-}
-export interface LoginResult {
+    userId?: string | null | undefined;
+    username?: string | null | undefined;
+    error?: string | undefined;
+};
+export type LoginResult = {
     logged_in_user: unknown;
     userId: string;
     username: string;
-}
+};
 //# sourceMappingURL=user.d.ts.map

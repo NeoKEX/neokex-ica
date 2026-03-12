@@ -15,10 +15,10 @@ const C = {
   blue:    '\x1b[34m',
   magenta: '\x1b[35m',
   cyan:    '\x1b[36m',
-} as const;
+};
 
 class Banner {
-  showSimple(version = '1.0.0'): void {
+  showSimple(version = '1.0.0') {
     const { bright, dim, green, yellow, cyan, reset } = C;
     console.log('');
     console.log(`${cyan}${bright}┌────────────────────────────────────────────────┐${reset}`);
@@ -28,7 +28,7 @@ class Banner {
     console.log('');
   }
 
-  showFull(version = '1.0.0', methodCount = 0): void {
+  showFull(version = '1.0.0', methodCount = 0) {
     const { bright, dim, green, yellow, blue, magenta, cyan, reset } = C;
 
     console.log('');

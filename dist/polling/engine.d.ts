@@ -1,47 +1,51 @@
-/**
- * @module polling/engine
- * Adaptive polling loop with circuit breaker, LRU seen-ID cache, and graceful shutdown.
- *
- * Architecture:
- *   - Adaptive interval: scales down on activity, up when quiet.
- *   - Circuit breaker: opens after N consecutive errors, auto-recovers after cooldown.
- *   - Per-cycle timeout: hung HTTP calls never stall the loop.
- *   - LRU eviction: seenMessageIds capped at 5,000 entries.
- *   - Reply-handler sweep: periodic cleanup prevents leaks.
- *   - SIGTERM / SIGINT: graceful shutdown with event emission.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import type { IgApiClient } from 'instagram-private-api';
-/** Minimal client interface accepted by PollingEngine. */
-interface IClient {
-    userId: string | null;
-    emit(event: string, ...args: unknown[]): boolean | void;
-}
-import type { PollingOptions, PollingStats, ReplyHandlerEntry } from '../types/index.js';
-export declare class PollingEngine {
-    private readonly ig;
-    private readonly client;
+export class PollingEngine {
+    constructor(ig: any, client: any);
+    ig: any;
+    client: any;
     isPolling: boolean;
-    private isSeeded;
-    private shutdownBound;
-    private seenMessageIds;
-    private seenIdTimestamps;
-    private threadLastItemMap;
-    readonly replyHandlers: Map<string, ReplyHandlerEntry>;
-    private stats;
-    constructor(ig: IgApiClient, client: IClient);
-    trackSeen(itemId: string): void;
-    private evictOldSeenIds;
+    isSeeded: boolean;
+    shutdownBound: boolean;
+    seenMessageIds: Set<any>;
+    seenIdTimestamps: Map<any, any>;
+    threadLastItemMap: Map<any, any>;
+    replyHandlers: Map<any, any>;
+    stats: {
+        startedAt: null;
+        totalPolls: number;
+        totalErrors: number;
+        consecutiveErrors: number;
+        lastPollAt: null;
+        lastErrorAt: null;
+        lastErrorMsg: null;
+        circuitOpen: boolean;
+        circuitOpenedAt: null;
+        currentInterval: number;
+    };
+    trackSeen(itemId: any): void;
+    evictOldSeenIds(): void;
     sweepExpiredReplyHandlers(maxAge?: number): void;
-    getPollingStats(): PollingStats;
-    private registerShutdownHandlers;
-    private seedSeenIds;
-    private pollCycle;
-    startPolling(options?: PollingOptions | number): Promise<void>;
+    getPollingStats(): {
+        uptime: number;
+        uptimeFormatted: string;
+        seenIdCount: number;
+        replyHandlerCount: number;
+        trackedThreads: number;
+        startedAt: null;
+        totalPolls: number;
+        totalErrors: number;
+        consecutiveErrors: number;
+        lastPollAt: null;
+        lastErrorAt: null;
+        lastErrorMsg: null;
+        circuitOpen: boolean;
+        circuitOpenedAt: null;
+        currentInterval: number;
+    };
+    registerShutdownHandlers(): void;
+    seedSeenIds(): Promise<void>;
+    pollCycle(): Promise<boolean>;
+    startPolling(options?: number): Promise<void>;
     stopPolling(): void;
-    restartPolling(options?: PollingOptions | number): Promise<void>;
+    restartPolling(options: any): Promise<void>;
 }
-export {};
 //# sourceMappingURL=engine.d.ts.map

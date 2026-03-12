@@ -6,20 +6,21 @@
  * @license MIT
  */
 
-import type { ErrorKind } from '../types/index.js';
-
 /**
  * Convert milliseconds to a human-readable uptime string.
  * e.g. `formatUptime(3665000)` → `"1h 1m 5s"`
+ *
+ * @param {number} ms
+ * @returns {string}
  */
-export function formatUptime(ms: number): string {
+export function formatUptime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes      = Math.floor(totalSeconds / 60);
   const hours        = Math.floor(minutes / 60);
   const days         = Math.floor(hours / 24);
 
-  if (days  > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
-  if (hours > 0) return `${hours}h ${minutes % 60}m ${totalSeconds % 60}s`;
+  if (days    > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
+  if (hours   > 0) return `${hours}h ${minutes % 60}m ${totalSeconds % 60}s`;
   if (minutes > 0) return `${minutes}m ${totalSeconds % 60}s`;
   return `${totalSeconds}s`;
 }
@@ -31,12 +32,14 @@ export function formatUptime(ms: number): string {
  * - `ratelimit` — HTTP 429, throttle, rate-limit
  * - `network`   — HTTP 5xx, ECONNREFUSED, timeout, ENOTFOUND
  * - `unknown`   — anything else
+ *
+ * @param {unknown} error
+ * @returns {'auth'|'ratelimit'|'network'|'unknown'}
  */
-export function classifyError(error: unknown): ErrorKind {
-  const raw     = error as Record<string, unknown>;
-  const msg     = (typeof raw?.message === 'string' ? raw.message : String(error)).toLowerCase();
-  const status  = (raw?.response as Record<string, unknown>)?.status
-                ?? raw?.statusCode as number | undefined;
+export function classifyError(error) {
+  const raw    = error;
+  const msg    = (typeof raw?.message === 'string' ? raw.message : String(error)).toLowerCase();
+  const status = raw?.response?.status ?? raw?.statusCode;
 
   if (
     status === 401 ||

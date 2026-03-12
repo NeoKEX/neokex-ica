@@ -1,6 +1,7 @@
 /**
  * @module types
- * Public type exports for ica-neokex.
+ * Public JSDoc typedef re-exports for ica-neokex.
+ * (Runtime no-op — types only.)
  *
  * @author NeoKEX (https://github.com/NeoKEX)
  * @license MIT

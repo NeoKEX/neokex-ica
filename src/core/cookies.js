@@ -11,9 +11,11 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 export class CookieManager {
   /**
    * Parse a Netscape-format cookie file into a key/value map.
+   * @param {string} content
+   * @returns {Record<string,string>}
    */
-  static parseNetscape(content: string): Record<string, string> {
-    const cookies: Record<string, string> = {};
+  static parseNetscape(content) {
+    const cookies = {};
 
     for (let line of content.split('\n')) {
       line = line.trim();
@@ -35,20 +37,21 @@ export class CookieManager {
   /**
    * Load cookies from a Netscape-format file on disk.
    * Throws if the file does not exist.
+   * @param {string} filePath
+   * @returns {Record<string,string>}
    */
-  static loadFromFile(filePath: string): Record<string, string> {
+  static loadFromFile(filePath) {
     if (!existsSync(filePath)) throw new Error(`Cookie file not found: ${filePath}`);
     return CookieManager.parseNetscape(readFileSync(filePath, 'utf-8'));
   }
 
   /**
    * Serialise a cookie map back to a Netscape-format file.
+   * @param {string} filePath
+   * @param {Record<string,string>} cookies
+   * @param {string} [domain='.instagram.com']
    */
-  static saveToFile(
-    filePath: string,
-    cookies: Record<string, string>,
-    domain = '.instagram.com',
-  ): void {
+  static saveToFile(filePath, cookies, domain = '.instagram.com') {
     const expiry = Math.floor(Date.now() / 1000) + 365 * 86400;
     const lines  = [
       '# Netscape HTTP Cookie File',
@@ -64,8 +67,10 @@ export class CookieManager {
 
   /**
    * Render a cookie map as a `Cookie` header string.
+   * @param {Record<string,string>} cookies
+   * @returns {string}
    */
-  static toString(cookies: Record<string, string>): string {
+  static toString(cookies) {
     return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
   }
 }

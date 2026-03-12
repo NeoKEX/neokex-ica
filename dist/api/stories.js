@@ -8,7 +8,6 @@
 import { readFileSync } from 'fs';
 import logger from '../logger.js';
 export class StoriesAPI {
-    ig;
     constructor(ig) {
         this.ig = ig;
     }

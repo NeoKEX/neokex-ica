@@ -1,31 +1,43 @@
-/**
- * @module core/client
- * Core Instagram client — authentication, session management, device state.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import { IgApiClient } from 'instagram-private-api';
-import { EventEmitter } from 'events';
-import type { LoginResult, SessionState, SessionValidationResult } from '../types/index.js';
-export declare class InstagramCore extends EventEmitter {
-    readonly ig: IgApiClient;
-    userId: string | null;
-    username: string | null;
-    isLoggedIn: boolean;
-    cookies: Record<string, string>;
+export class InstagramCore extends EventEmitter<[never]> {
     constructor();
-    login(username: string, password: string): Promise<LoginResult>;
-    loadCookiesFromFile(filePath: string): Promise<Record<string, string>>;
-    saveCookiesToFile(filePath: string, domain?: string): void;
-    setCookies(cookies: Record<string, string>): void;
-    getCookies(): Record<string, string>;
-    validateSession(): Promise<SessionValidationResult>;
+    ig: IgApiClient;
+    userId: any;
+    username: any;
+    isLoggedIn: boolean;
+    cookies: {};
+    login(username: any, password: any): Promise<{
+        logged_in_user: import("instagram-private-api").AccountRepositoryLoginResponseLogged_in_user;
+        userId: any;
+        username: any;
+    }>;
+    loadCookiesFromFile(filePath: any): Promise<{}>;
+    saveCookiesToFile(filePath: any, domain?: string): void;
+    setCookies(cookies: any): void;
+    getCookies(): {};
+    validateSession(): Promise<{
+        valid: boolean;
+        userId: any;
+        username: any;
+        error?: undefined;
+    } | {
+        valid: boolean;
+        error: any;
+        userId?: undefined;
+        username?: undefined;
+    }>;
     pingSession(): Promise<boolean>;
-    getSessionState(): Promise<SessionState>;
-    loadSessionState(state: SessionState): Promise<void>;
-    getCurrentUserID(): string | null;
-    getCurrentUsername(): string | null;
+    getSessionState(): Promise<{
+        cookies: {};
+        userId: any;
+        username: any;
+        deviceId: string;
+        uuid: string;
+    }>;
+    loadSessionState(state: any): Promise<void>;
+    getCurrentUserID(): any;
+    getCurrentUsername(): any;
     getIgClient(): IgApiClient;
 }
+import { EventEmitter } from 'events';
+import { IgApiClient } from 'instagram-private-api';
 //# sourceMappingURL=client.d.ts.map

@@ -1,32 +1,60 @@
-/**
- * @module api/media
- * Media sending — photos, videos, voice notes, GIFs, stickers, links, carousels, URL downloads.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import type { IgApiClient } from 'instagram-private-api';
-import type { MediaInfo, DownloadedMedia } from '../types/index.js';
-export declare class MediaAPI {
-    private readonly ig;
-    private readonly trackSeen;
-    constructor(ig: IgApiClient, trackSeen: (id: string) => void);
-    private parseResult;
-    private track;
-    sendPhoto(threadId: string, photoPath: string): Promise<Record<string, unknown>>;
-    sendPhotoWithCaption(threadId: string, photoPath: string, caption?: string): Promise<Record<string, unknown>>;
-    sendPhotoFromUrl(threadId: string, photoUrl: string): Promise<Record<string, unknown>>;
-    sendVideo(threadId: string, videoPath: string): Promise<Record<string, unknown>>;
-    sendVideoFromUrl(threadId: string, videoUrl: string): Promise<Record<string, unknown>>;
-    sendVoiceNote(threadId: string, audioPath: string): Promise<Record<string, unknown>>;
-    sendGif(threadId: string, giphyId: string): Promise<Record<string, unknown>>;
-    sendSticker(threadId: string, stickerId: string): Promise<Record<string, unknown>>;
-    sendAnimatedMedia(threadId: string, mediaId: string): Promise<Record<string, unknown>>;
-    sendLink(threadId: string, linkUrl: string, linkText?: string): Promise<Record<string, unknown>>;
-    shareMediaToThread(threadId: string, mediaId: string, message?: string): Promise<Record<string, unknown>>;
-    getMessageMediaUrl(threadId: string, itemId: string): Promise<MediaInfo>;
-    downloadMessageMedia(threadId: string, itemId: string, savePath?: string): Promise<DownloadedMedia>;
-    forwardMessage(fromThreadId: string, toThreadId: string, itemId: string): Promise<Record<string, unknown>>;
-    private _downloadToTemp;
+export class MediaAPI {
+    constructor(ig: any, trackSeen: any);
+    ig: any;
+    trackSeen: any;
+    parseResult(raw: any): {
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    };
+    track(raw: any): {
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    };
+    sendPhoto(threadId: any, photoPath: any): Promise<unknown>;
+    sendPhotoWithCaption(threadId: any, photoPath: any, caption?: string): Promise<unknown>;
+    sendPhotoFromUrl(threadId: any, photoUrl: any): Promise<unknown>;
+    sendVideo(threadId: any, videoPath: any): Promise<unknown>;
+    sendVideoFromUrl(threadId: any, videoUrl: any): Promise<unknown>;
+    sendVoiceNote(threadId: any, audioPath: any): Promise<unknown>;
+    sendGif(threadId: any, giphyId: any): Promise<{
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    }>;
+    sendSticker(threadId: any, stickerId: any): Promise<{
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    }>;
+    sendAnimatedMedia(threadId: any, mediaId: any): Promise<{
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    }>;
+    sendLink(threadId: any, linkUrl: any, linkText?: string): Promise<{
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    }>;
+    shareMediaToThread(threadId: any, mediaId: any, message?: string): Promise<{
+        item_id: any;
+        thread_id: any;
+        timestamp: any;
+    }>;
+    getMessageMediaUrl(threadId: any, itemId: any): Promise<{
+        item_id: any;
+        item_type: any;
+        media: null;
+    }>;
+    downloadMessageMedia(threadId: any, itemId: any, savePath: any): Promise<{
+        path: any;
+        size: any;
+        type: string;
+        url: any;
+    }>;
+    forwardMessage(fromThreadId: any, toThreadId: any, itemId: any): Promise<unknown>;
+    _downloadToTemp(url: any, ext: any, timeoutMs?: number): Promise<string>;
 }
 //# sourceMappingURL=media.d.ts.map

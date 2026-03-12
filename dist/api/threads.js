@@ -10,8 +10,6 @@ import { sleep } from '../utils/sleep.js';
 import { withTimeout } from '../utils/timeout.js';
 const POLL_TIMEOUT = 20_000;
 export class ThreadsAPI {
-    ig;
-    userId;
     constructor(ig, userId) {
         this.ig = ig;
         this.userId = userId;

@@ -1,19 +1,11 @@
-/**
- * @module api/stories
- * Stories — get, upload photo story, upload video story, delete, react.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import type { IgApiClient } from 'instagram-private-api';
-export declare class StoriesAPI {
-    private readonly ig;
-    constructor(ig: IgApiClient);
-    getStories(userId: string | number): Promise<unknown[]>;
-    uploadStory(photoPath: string, options?: Record<string, unknown>): Promise<unknown>;
-    uploadVideoStory(videoPath: string, options?: Record<string, unknown>): Promise<unknown>;
-    deleteStory(mediaId: string): Promise<void>;
-    reactToStory(userId: string | number, storyId: string, emoji: string): Promise<void>;
-    getCloseFriendsStories(): Promise<unknown[]>;
+export class StoriesAPI {
+    constructor(ig: any);
+    ig: any;
+    getStories(userId: any): Promise<any>;
+    uploadStory(photoPath: any, options?: {}): Promise<any>;
+    uploadVideoStory(videoPath: any, options?: {}): Promise<any>;
+    deleteStory(mediaId: any): Promise<void>;
+    reactToStory(userId: any, storyId: any, emoji: any): Promise<void>;
+    getCloseFriendsStories(): Promise<any>;
 }
 //# sourceMappingURL=stories.d.ts.map

@@ -7,8 +7,6 @@
  */
 import logger from '../logger.js';
 export class FeedsAPI {
-    ig;
-    userId;
     constructor(ig, userId) {
         this.ig = ig;
         this.userId = userId;

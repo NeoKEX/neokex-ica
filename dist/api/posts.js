@@ -9,15 +9,13 @@ import { readFileSync } from 'fs';
 import sharp from 'sharp';
 import logger from '../logger.js';
 export class PostsAPI {
-    ig;
     constructor(ig) {
         this.ig = ig;
     }
     // ─── Likes ─────────────────────────────────────────────────────────────────
     async likePost(mediaId) {
         try {
-            await this.ig.media
-                .like({ mediaId, moduleInfo: { module_name: 'profile' }, d: 0 });
+            await this.ig.media.like({ mediaId, moduleInfo: { module_name: 'profile' }, d: 0 });
             logger.info(`Liked post ${mediaId}`);
         }
         catch (error) {
@@ -27,8 +25,7 @@ export class PostsAPI {
     }
     async unlikePost(mediaId) {
         try {
-            await this.ig.media
-                .unlike({ mediaId, moduleInfo: { module_name: 'profile' }, d: 0 });
+            await this.ig.media.unlike({ mediaId, moduleInfo: { module_name: 'profile' }, d: 0 });
             logger.info(`Unliked post ${mediaId}`);
         }
         catch (error) {
@@ -101,8 +98,7 @@ export class PostsAPI {
     }
     async deletePost(mediaId) {
         try {
-            await this.ig.media
-                .delete({ mediaId });
+            await this.ig.media.delete({ mediaId });
             logger.info(`Deleted post ${mediaId}`);
         }
         catch (error) {
@@ -132,8 +128,7 @@ export class PostsAPI {
     }
     async savePost(mediaId) {
         try {
-            await this.ig.media
-                .save({ mediaId });
+            await this.ig.media.save({ mediaId });
             logger.info(`Saved post ${mediaId}`);
         }
         catch (error) {
@@ -143,8 +138,7 @@ export class PostsAPI {
     }
     async unsavePost(mediaId) {
         try {
-            await this.ig.media
-                .unsave({ mediaId });
+            await this.ig.media.unsave({ mediaId });
             logger.info(`Unsaved post ${mediaId}`);
         }
         catch (error) {
@@ -169,10 +163,7 @@ export class PostsAPI {
     }
     async uploadVideo(videoPath, caption = '', coverPath) {
         try {
-            const options = {
-                video: readFileSync(videoPath),
-                caption,
-            };
+            const options = { video: readFileSync(videoPath), caption };
             if (coverPath)
                 options['coverImage'] = readFileSync(coverPath);
             const result = await this.ig.publish.video(options);

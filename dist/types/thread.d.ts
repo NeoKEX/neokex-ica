@@ -1,49 +1,39 @@
-/**
- * @module types/thread
- * Thread and inbox type definitions.
- *
- * @author NeoKEX (https://github.com/NeoKEX)
- * @license MIT
- */
-import type { RawMessageItem } from './message.js';
-export interface ThreadUser {
+export type ThreadUser = {
     pk: number | string;
     username: string;
-    full_name?: string;
-    profile_pic_url?: string;
-    is_private?: boolean;
-    [key: string]: unknown;
-}
-export interface Thread {
+    full_name?: string | undefined;
+    profile_pic_url?: string | undefined;
+    is_private?: boolean | undefined;
+};
+export type Thread = {
     thread_id: string;
-    thread_title?: string;
-    users?: ThreadUser[];
-    items?: RawMessageItem[];
-    last_permanent_item?: RawMessageItem;
-    has_older?: boolean;
-    cursor?: string | null;
-    [key: string]: unknown;
-}
-export interface InboxResult {
+    thread_title?: string | undefined;
+    users?: ThreadUser[] | undefined;
+    items?: unknown[] | undefined;
+    last_permanent_item?: unknown;
+    has_older?: boolean | undefined;
+    cursor?: string | null | undefined;
+};
+export type InboxResult = {
     threads: Thread[];
     has_older: boolean;
     cursor: string | null;
     unseen_count: number;
     pending_requests_total: number;
-}
-export interface FullInboxResult {
+};
+export type FullInboxResult = {
     threads: Thread[];
     total: number;
-}
-export interface PendingInboxResult {
+};
+export type PendingInboxResult = {
     threads: Thread[];
     has_older: boolean;
-}
-export interface ThreadResult {
+};
+export type ThreadResult = {
     thread_id: string;
-    items: RawMessageItem[];
+    items: unknown[];
     has_older: boolean;
     cursor: string | null;
     users: ThreadUser[];
-}
+};
 //# sourceMappingURL=thread.d.ts.map
