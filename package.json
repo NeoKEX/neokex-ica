@@ -1,14 +1,21 @@
 {
   "name": "ica-neokex",
   "version": "1.0.0",
-  "description": "Professional Instagram Chat API library for Node.js — 124+ methods for messaging, media uploads, real-time polling, feed access, stories, and social automation with long-running bot resilience.",
-  "main": "src/index.js",
+  "description": "Professional Instagram Chat API library for Node.js — 124+ methods for messaging, media, real-time polling, feeds, stories, and social automation with long-running bot resilience.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
-    "start": "node demo.js"
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "npm run build && node demo.js",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "instagram",
@@ -25,9 +32,10 @@
     "social-media",
     "dm-automation",
     "instagram-client",
-    "ica-neokex"
+    "ica-neokex",
+    "typescript"
   ],
-  "author": "NeoKEX <salneowaz@gmail.com>",
+  "author": "NeoKEX <salneowaz@gmail.com> (https://github.com/NeoKEX)",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -41,10 +49,12 @@
     "node": ">=20.0.0"
   },
   "files": [
+    "dist/",
     "src/",
     "README.md",
     "LICENSE",
-    "EXAMPLES.md"
+    "EXAMPLES.md",
+    "tsconfig.json"
   ],
   "dependencies": {
     "axios": "^1.6.2",
@@ -52,5 +62,9 @@
     "form-data": "^4.0.4",
     "instagram-private-api": "^1.46.1",
     "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "typescript": "^5.4.0"
   }
 }
