@@ -14,6 +14,10 @@ neokex-ica is a professional Node.js library for Instagram automation and messag
 - Social features (like, comment, feed access)
 - Cookie-based authentication for persistent sessions
 
+## Version History
+
+- **v2.1.0** — Major bug fixes + 40+ new API methods. Fixed message tracking bug (item_id was read from wrong location in API response), added inbox seeding to prevent duplicate events on startup, replaced full-scan polling with per-thread cursor diffing for efficiency.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
