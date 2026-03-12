@@ -5,6 +5,7 @@ import logger from './Logger.js';
 import { readFileSync, writeFileSync } from 'fs';
 import sharp from 'sharp';
 import axios from 'axios';
+import { withRetry, sleep } from './utils.js';
 
 export default class InstagramClientV2 extends EventEmitter {
   constructor() {
@@ -115,6 +116,28 @@ export default class InstagramClientV2 extends EventEmitter {
 
   getIgClient() {
     return this.ig;
+  }
+
+  async validateSession() {
+    try {
+      const user = await this.ig.account.currentUser();
+      this.username = user.username;
+      logger.info(`Session valid — user: ${this.username}`);
+      return { valid: true, userId: this.userId, username: this.username };
+    } catch (error) {
+      logger.error('Session validation failed:', error.message);
+      this.emit('session:expired', { error });
+      return { valid: false, error: error.message };
+    }
+  }
+
+  async pingSession() {
+    try {
+      await this.ig.account.currentUser();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   async getSessionState() {
@@ -265,12 +288,12 @@ export default class InstagramClientV2 extends EventEmitter {
   async getFollowers(userId, maxItems = 100) {
     try {
       const feed = this.ig.feed.accountFollowers(userId);
-      const all = [];
-      while (feed.isMoreAvailable() && all.length < maxItems) {
+      const all  = [];
+      do {
         const batch = await feed.items();
         all.push(...batch);
-        if (all.length < maxItems) await new Promise(r => setTimeout(r, 500));
-      }
+        if (feed.isMoreAvailable() && all.length < maxItems) await sleep(600);
+      } while (feed.isMoreAvailable() && all.length < maxItems);
       return all.slice(0, maxItems);
     } catch (error) {
       logger.error('Failed to get followers:', error.message);
@@ -281,12 +304,12 @@ export default class InstagramClientV2 extends EventEmitter {
   async getFollowing(userId, maxItems = 100) {
     try {
       const feed = this.ig.feed.accountFollowing(userId);
-      const all = [];
-      while (feed.isMoreAvailable() && all.length < maxItems) {
+      const all  = [];
+      do {
         const batch = await feed.items();
         all.push(...batch);
-        if (all.length < maxItems) await new Promise(r => setTimeout(r, 500));
-      }
+        if (feed.isMoreAvailable() && all.length < maxItems) await sleep(600);
+      } while (feed.isMoreAvailable() && all.length < maxItems);
       return all.slice(0, maxItems);
     } catch (error) {
       logger.error('Failed to get following:', error.message);

@@ -10,9 +10,20 @@ class InstagramChatAPI extends InstagramClientV2 {
     this.dm = new DirectMessageV2(this);
 
     if (!bannerShown && options.showBanner !== false) {
-      banner.showSimple('2.1.0');
+      banner.showSimple('2.2.0');
       bannerShown = true;
     }
+  }
+
+  getStatus() {
+    const stats = this.dm.getPollingStats();
+    return {
+      isLoggedIn:    this.isLoggedIn,
+      userId:        this.userId,
+      username:      this.username,
+      isPolling:     this.isPolling,
+      pollingStats:  stats,
+    };
   }
 
   async login(username, password) {
@@ -87,12 +98,16 @@ class InstagramChatAPI extends InstagramClientV2 {
     return await this.dm.createThread(userIds);
   }
 
-  async startListening(interval = 5000) {
-    await this.dm.startPolling(interval);
+  async startListening(intervalOrOptions = 5000) {
+    await this.dm.startPolling(intervalOrOptions);
   }
 
   stopListening() {
     this.dm.stopPolling();
+  }
+
+  async restartPolling(intervalOrOptions) {
+    return this.dm.restartPolling(intervalOrOptions);
   }
 
   async getRecentMessages(limit = 20) {
@@ -271,6 +286,22 @@ class InstagramChatAPI extends InstagramClientV2 {
     this.on('polling:stop', callback);
   }
 
+  onSessionExpired(callback) {
+    this.on('session:expired', callback);
+  }
+
+  onCircuitOpen(callback) {
+    this.on('circuit:open', callback);
+  }
+
+  onCircuitClosed(callback) {
+    this.on('circuit:closed', callback);
+  }
+
+  onShutdown(callback) {
+    this.on('shutdown', callback);
+  }
+
   // ─── Session & Auth ──────────────────────────────────────────────────────────
 
   loadCookiesFromFile(filePath) {
@@ -303,6 +334,14 @@ class InstagramChatAPI extends InstagramClientV2 {
 
   async loadSessionState(sessionState) {
     return super.loadSessionState(sessionState);
+  }
+
+  async validateSession() {
+    return super.validateSession();
+  }
+
+  async pingSession() {
+    return super.pingSession();
   }
 
   // ─── User Info & Social ──────────────────────────────────────────────────────

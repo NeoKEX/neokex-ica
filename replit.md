@@ -16,6 +16,7 @@ neokex-ica is a professional Node.js library for Instagram automation and messag
 
 ## Version History
 
+- **v2.2.0** — Long-running bot hardening. Circuit breaker with auto-recovery, adaptive polling interval, per-request HTTP timeouts, shared exponential-backoff retry on all send methods, SIGTERM/SIGINT graceful shutdown, session expiry detection, LRU seenMessageIds eviction, periodic reply-handler sweep, cancelable scheduleMessage(), full observability via getStatus()/getPollingStats(), validateSession()/pingSession(), restartPolling(), error classification (auth/ratelimit/network), fixed getFollowers/getFollowing do-while pagination, uncaughtException/unhandledRejection forwarded to onError.
 - **v2.1.0** — Major bug fixes + 40+ new API methods. Fixed message tracking bug (item_id was read from wrong location in API response), added inbox seeding to prevent duplicate events on startup, replaced full-scan polling with per-thread cursor diffing for efficiency.
 
 ## User Preferences
