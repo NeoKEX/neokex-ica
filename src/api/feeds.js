@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-import logger from '../logger.js';
+import logger from '../Logger.js';
 
 export class FeedsAPI {
   constructor(ig, userId) {

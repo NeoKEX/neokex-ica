@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-import logger          from '../logger.js';
+import logger          from '../Logger.js';
 import { sleep }       from '../utils/sleep.js';
 import { withTimeout } from '../utils/timeout.js';
 
@@ -76,7 +76,7 @@ export class ThreadsAPI {
 
   async getThread(threadId, cursor) {
     try {
-      const feed  = this.ig.feed.directThread({ thread_id: threadId, oldest_cursor: cursor ?? '' });
+      const feed  = this.ig.feed.directThread({ thread_id: threadId, oldest_cursor: cursor ?? undefined });
       const items = await feed.items();
       return {
         thread_id: threadId,
@@ -134,7 +134,7 @@ export class ThreadsAPI {
 
   async createThread(userIds) {
     const ids    = userIds.map(String);
-    const thread = await this.ig.direct.createGroupThread(ids, '');
+    const thread = await this.ig.direct.createGroupThread(ids);
     logger.info(`Thread created with users: ${ids.join(', ')}`);
     return thread;
   }

@@ -7,7 +7,7 @@
  */
 
 import { readFileSync } from 'fs';
-import logger from '../logger.js';
+import logger from '../Logger.js';
 
 export class StoriesAPI {
   constructor(ig) {

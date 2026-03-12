@@ -263,7 +263,7 @@ export default class InstagramClientV2 extends EventEmitter {
 
   async getBlockedUsers() {
     try {
-      const feed = this.ig.feed.accountFollowersYouKnow();
+      const feed = this.ig.feed.accountBlocked();
       return await feed.items();
     } catch (error) {
       logger.error('Failed to get blocked users:', error.message);
@@ -618,13 +618,13 @@ export default class InstagramClientV2 extends EventEmitter {
     try {
       const current = await this.ig.account.currentUser();
       const payload = {
-        username: options.username || current.username,
-        name: options.name || options.fullName || current.full_name,
-        biography: options.biography || options.bio || current.biography,
-        email: options.email || current.email || '',
-        phone_number: options.phone || current.phone_number || '',
-        external_url: options.website || options.externalUrl || current.external_url || '',
-        gender: options.gender ?? current.gender ?? 1,
+        username:     options.username   || current.username,
+        first_name:   options.name       || options.fullName   || current.full_name,
+        biography:    options.biography  || options.bio        || current.biography   || '',
+        email:        options.email      || current.email      || '',
+        phone_number: options.phone      || current.phone_number || '',
+        external_url: options.website    || options.externalUrl || current.external_url || '',
+        gender:       options.gender     ?? current.gender     ?? 1,
       };
 
       const result = await this.ig.account.editProfile(payload);

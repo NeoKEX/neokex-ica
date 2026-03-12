@@ -14,7 +14,7 @@
  * @license MIT
  */
 
-import logger                              from '../logger.js';
+import logger                              from '../Logger.js';
 import { sleep }                           from '../utils/sleep.js';
 import { withTimeout }                     from '../utils/timeout.js';
 import { classifyError, formatUptime }     from '../utils/format.js';
