@@ -32,7 +32,7 @@ export class ThreadsAPI {
   async getInbox(): Promise<InboxResult> {
     try {
       const feed    = this.ig.feed.directInbox();
-      const threads = await withTimeout(feed.items(), POLL_TIMEOUT, 'getInbox') as Thread[];
+      const threads = await withTimeout(feed.items(), POLL_TIMEOUT, 'getInbox') as unknown as Thread[];
       return {
         threads,
         has_older:              !!(feed as unknown as { moreAvailable: boolean }).moreAvailable,
@@ -54,7 +54,7 @@ export class ThreadsAPI {
     const all: Thread[] = [];
     let page = 0;
     do {
-      const batch = await feed.items() as Thread[];
+      const batch = await feed.items() as unknown as Thread[];
       all.push(...batch);
       page++;
       if ((feed as unknown as { isMoreAvailable(): boolean }).isMoreAvailable() && page < maxPages)
@@ -74,7 +74,7 @@ export class ThreadsAPI {
   async getPendingInbox(): Promise<PendingInboxResult> {
     try {
       const feed    = this.ig.feed.directPending();
-      const threads = await feed.items() as Thread[];
+      const threads = await feed.items() as unknown as Thread[];
       return { threads, has_older: !!(feed as unknown as { moreAvailable: boolean }).moreAvailable };
     } catch (error) {
       logger.error('Failed to get pending inbox:', (error as Error).message);
@@ -86,8 +86,8 @@ export class ThreadsAPI {
 
   async getThread(threadId: string, cursor?: string): Promise<ThreadResult> {
     try {
-      const feed  = this.ig.feed.directThread({ thread_id: threadId, oldest_cursor: cursor });
-      const items = await feed.items() as RawMessageItem[];
+      const feed  = this.ig.feed.directThread({ thread_id: threadId, oldest_cursor: cursor ?? '' });
+      const items = await feed.items() as unknown as RawMessageItem[];
       return {
         thread_id: threadId,
         items,
@@ -102,8 +102,8 @@ export class ThreadsAPI {
   }
 
   async getThreadMessages(threadId: string, limit = 20): Promise<RawMessageItem[]> {
-    const feed  = this.ig.feed.directThread({ thread_id: threadId });
-    const items = await feed.items() as RawMessageItem[];
+    const feed  = this.ig.feed.directThread({ thread_id: threadId, oldest_cursor: '' });
+    const items = await feed.items() as unknown as RawMessageItem[];
     return items.slice(0, limit);
   }
 
@@ -144,7 +144,7 @@ export class ThreadsAPI {
 
   async createThread(userIds: string[]): Promise<unknown> {
     const ids    = userIds.map(String);
-    const thread = await this.ig.direct.createGroupThread(ids);
+    const thread = await this.ig.direct.createGroupThread(ids, '');
     logger.info(`Thread created with users: ${ids.join(', ')}`);
     return thread;
   }

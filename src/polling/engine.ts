@@ -15,7 +15,11 @@
  */
 
 import type { IgApiClient } from 'instagram-private-api';
-import type EventEmitter    from 'eventemitter3';
+/** Minimal client interface accepted by PollingEngine. */
+interface IClient {
+  userId: string | null;
+  emit(event: string, ...args: unknown[]): boolean | void;
+}
 import logger               from '../logger.js';
 import { sleep }            from '../utils/sleep.js';
 import { withTimeout }      from '../utils/timeout.js';
@@ -60,7 +64,7 @@ export class PollingEngine {
 
   constructor(
     private readonly ig:      IgApiClient,
-    private readonly client:  EventEmitter & { userId: string | null },
+    private readonly client:  IClient,
   ) {}
 
   // ─── Seen-ID management ────────────────────────────────────────────────────
@@ -148,7 +152,7 @@ export class PollingEngine {
     try {
       logger.info('Seeding existing message IDs...');
       const feed    = this.ig.feed.directInbox();
-      const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'seed') as Thread[];
+      const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'seed') as unknown as Thread[];
 
       for (const thread of threads) {
         const last = thread.last_permanent_item;
@@ -175,7 +179,7 @@ export class PollingEngine {
 
   private async pollCycle(): Promise<boolean> {
     const feed    = this.ig.feed.directInbox();
-    const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'inbox') as Thread[];
+    const threads = await withTimeout(feed.items(), POLL_TIMEOUT_MS, 'inbox') as unknown as Thread[];
     if (!threads.length) return false;
 
     let hadActivity = false;
@@ -243,7 +247,7 @@ export class PollingEngine {
     // Check pending DMs
     try {
       const pending = this.ig.feed.directPending();
-      const pthr    = await pending.items() as Thread[];
+      const pthr    = await pending.items() as unknown as Thread[];
       if (pthr.length > 0) {
         this.client.emit('pending_request', { count: pthr.length, threads: pthr });
       }

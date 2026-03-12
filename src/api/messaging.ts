@@ -7,7 +7,10 @@
  */
 
 import type { IgApiClient } from 'instagram-private-api';
-import type EventEmitter    from 'eventemitter3';
+/** Minimal EventEmitter interface accepted by MessagingAPI. */
+interface IEmitter {
+  emit(event: string, ...args: unknown[]): boolean | void;
+}
 import logger               from '../logger.js';
 import { withRetry }        from '../utils/retry.js';
 import { sleep }            from '../utils/sleep.js';
@@ -24,7 +27,7 @@ import type {
 export class MessagingAPI {
   constructor(
     private readonly ig:      IgApiClient,
-    private readonly emitter: EventEmitter,
+    private readonly emitter: IEmitter,
     private readonly replyHandlers: Map<string, ReplyHandlerEntry>,
     private readonly trackSeen:     (id: string) => void,
   ) {}

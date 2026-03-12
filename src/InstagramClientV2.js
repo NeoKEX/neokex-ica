@@ -694,4 +694,143 @@ export default class InstagramClientV2 extends EventEmitter {
       throw new Error(`Failed to search locations: ${error.message}`);
     }
   }
+
+  async searchAll(query) {
+    const [users, hashtags, locations] = await Promise.allSettled([
+      this.searchUsers(query),
+      this.searchHashtags(query),
+      this.searchLocations(query),
+    ]);
+    return {
+      users:     users.status     === 'fulfilled' ? users.value     : [],
+      hashtags:  hashtags.status  === 'fulfilled' ? hashtags.value  : [],
+      locations: locations.status === 'fulfilled' ? locations.value : [],
+    };
+  }
+
+  // ─── Suggested Users ─────────────────────────────────────────────────────────
+
+  async getSuggestedUsers(maxItems = 30) {
+    try {
+      const feed  = this.ig.feed.suggestedUsers();
+      const items = await feed.items();
+      return (items || []).slice(0, maxItems);
+    } catch (error) {
+      logger.error('Failed to get suggested users:', error.message);
+      throw new Error(`Failed to get suggested users: ${error.message}`);
+    }
+  }
+
+  // ─── Liked Posts ─────────────────────────────────────────────────────────────
+
+  async getLikedPosts(maxItems = 30) {
+    try {
+      const feed  = this.ig.feed.liked();
+      const items = await feed.items();
+      return (items || []).slice(0, maxItems);
+    } catch (error) {
+      logger.error('Failed to get liked posts:', error.message);
+      throw new Error(`Failed to get liked posts: ${error.message}`);
+    }
+  }
+
+  // ─── Stories ─────────────────────────────────────────────────────────────────
+
+  async deleteStory(mediaId) {
+    try {
+      await this.ig.media.delete({ mediaId, mediaType: 'PHOTO' });
+      logger.info(`Story ${mediaId} deleted`);
+    } catch (error) {
+      logger.error('Failed to delete story:', error.message);
+      throw new Error(`Failed to delete story: ${error.message}`);
+    }
+  }
+
+  async reactToStory(userId, storyId, emoji) {
+    try {
+      await this.ig.direct.sendReaction({ recipientUsers: [[userId]], storyId, emoji });
+      logger.info(`Reacted to story ${storyId} with ${emoji}`);
+    } catch (error) {
+      logger.error('Failed to react to story:', error.message);
+      throw new Error(`Failed to react to story: ${error.message}`);
+    }
+  }
+
+  async getCloseFriendsStories() {
+    try {
+      const tray = await this.ig.feed.reelsTray('besties').items();
+      return tray || [];
+    } catch (error) {
+      logger.error('Failed to get close friends stories:', error.message);
+      throw new Error(`Failed to get close friends stories: ${error.message}`);
+    }
+  }
+
+  // ─── Highlights ──────────────────────────────────────────────────────────────
+
+  async getUserHighlights(userId) {
+    try {
+      const feed  = this.ig.feed.reelsMedia({ userIds: [String(userId)] });
+      const items = await feed.items();
+      logger.info(`Fetched highlights for user ${userId}`);
+      return items || [];
+    } catch (error) {
+      logger.error('Failed to get user highlights:', error.message);
+      throw new Error(`Failed to get user highlights: ${error.message}`);
+    }
+  }
+
+  async getHighlightItems(highlightId) {
+    try {
+      const feed  = this.ig.feed.reelsMedia({ userIds: [String(highlightId)] });
+      const items = await feed.items();
+      logger.info(`Fetched items for highlight ${highlightId}`);
+      return items || [];
+    } catch (error) {
+      logger.error('Failed to get highlight items:', error.message);
+      throw new Error(`Failed to get highlight items: ${error.message}`);
+    }
+  }
+
+  // ─── Notifications ───────────────────────────────────────────────────────────
+
+  async markNotificationsSeen() {
+    try {
+      await this.ig.news.markAsSeen();
+      logger.info('All notifications marked as seen');
+    } catch (error) {
+      logger.error('Failed to mark notifications as seen:', error.message);
+      throw new Error(`Failed to mark notifications as seen: ${error.message}`);
+    }
+  }
+
+  async getFollowRequests() {
+    try {
+      const feed = this.ig.feed.pendingFriendships();
+      return await feed.items();
+    } catch (error) {
+      logger.error('Failed to get follow requests:', error.message);
+      throw new Error(`Failed to get follow requests: ${error.message}`);
+    }
+  }
+
+  async approveFollowRequest(userId) {
+    try {
+      await this.ig.friendship.approve(userId);
+      logger.info(`Approved follow request from user ${userId}`);
+    } catch (error) {
+      logger.error('Failed to approve follow request:', error.message);
+      throw new Error(`Failed to approve follow request: ${error.message}`);
+    }
+  }
+
+  async rejectFollowRequest(userId) {
+    try {
+      await this.ig.friendship.deny(userId);
+      logger.info(`Rejected follow request from user ${userId}`);
+    } catch (error) {
+      logger.error('Failed to reject follow request:', error.message);
+      throw new Error(`Failed to reject follow request: ${error.message}`);
+    }
+  }
 }

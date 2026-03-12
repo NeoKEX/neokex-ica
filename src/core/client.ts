@@ -7,7 +7,7 @@
  */
 
 import { IgApiClient } from 'instagram-private-api';
-import EventEmitter    from 'eventemitter3';
+import { EventEmitter } from 'events';
 import { readFileSync, writeFileSync } from 'fs';
 import logger          from '../logger.js';
 import { CookieManager } from './cookies.js';

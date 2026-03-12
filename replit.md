@@ -2,20 +2,22 @@
 
 ## Overview
 
-`ica-neokex` is a professional Node.js library for Instagram automation and messaging. It provides a comprehensive API wrapper around Instagram's private APIs, enabling developers to build bots, chatbots, and automation tools with 124+ methods for messaging, media sharing, thread management, and social features.
+`ica-neokex` is a professional Node.js library for Instagram automation and messaging. It provides a comprehensive API wrapper around Instagram's private APIs, enabling developers to build bots, chatbots, and automation tools with 140+ methods for messaging, media sharing, thread management, and social features.
 
 **Core Purpose**: Simplify Instagram automation with a clean, event-driven interface for direct messaging, content posting, user interactions, and long-running bot operation.
 
 **Key Capabilities**:
-- 124+ API methods covering messaging, media, threads, feeds, social, and profile management
+- 140+ API methods covering messaging, media, threads, feeds, social, and profile management
 - Real-time message listening with adaptive polling
 - Circuit breaker with auto-recovery for long-running bots
 - Cookie-based authentication for persistent sessions
 - Graceful shutdown and session expiry detection
 - Full observability via `getStatus()` and `getPollingStats()`
+- TypeScript support via `allowJs: true` + JSDoc — users get IntelliSense and `.d.ts` declarations without any `.ts` source files
 
 ## Version History
 
+- **v1.1.0** — TypeScript support (JSDoc + `allowJs`). Added: `startPolling`/`stopPolling` canonical aliases, `getPendingInbox`, `searchAll`, `getSuggestedUsers`, `getLikedPosts`, `deleteStory`, `reactToStory`, `getCloseFriendsStories`, `getUserHighlights`, `getHighlightItems`, `markNotificationsSeen`, `getFollowRequests`, `approveFollowRequest`, `rejectFollowRequest`. All TS module compilation errors fixed.
 - **v1.0.0** — Public release under `ica-neokex`. Includes all v2.2.0 resilience features: circuit breaker, adaptive polling, per-request timeouts, exponential-backoff retry, SIGTERM/SIGINT graceful shutdown, session expiry detection, LRU seenMessageIds eviction, reply handler sweep, cancelable `scheduleMessage()`, `validateSession()`, `pingSession()`, `restartPolling()`, `getStatus()`, error classification, and `do-while` pagination fix for `getFollowers`/`getFollowing`.
 
 ## User Preferences
@@ -26,12 +28,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Module Structure
 
-1. **InstagramClientV2** (`src/InstagramClientV2.js`) — Core authentication and session management
-   - Wraps the `instagram-private-api` library
-   - Handles login via username/password or cookie-based authentication
-   - Manages device generation and proxy configuration
-   - Extends EventEmitter for event-driven architecture
-   - Provides `validateSession()`, `pingSession()`, `getSessionState()`
+**JavaScript source (primary — compiled via `tsc --allowJs`)**
+
+1. **InstagramClientV2** (`src/InstagramClientV2.js`) — Core client with all Instagram API methods
+   - Authentication via username/password or cookies
+   - All user, feed, post, story, highlights, notifications, search, profile methods
+   - Extends EventEmitter3
 
 2. **DirectMessageV2** (`src/DirectMessageV2.js`) — Messaging and polling layer
    - All DM operations: send, receive, reactions, media uploads
@@ -44,20 +46,39 @@ Preferred communication style: Simple, everyday language.
    - `getPollingStats()` and `restartPolling()`
 
 3. **CookieManager** (`src/CookieManager.js`) — Cookie persistence
-   - Parses Netscape-format cookie files
-   - Handles serialization/deserialization
-   - Enables session restoration without repeated logins
 
 4. **InstagramChatAPI** (`src/index.js`) — Main API facade
    - Entry point combining client and DM functionality
-   - 124+ public methods with clean delegation
-   - Event helper methods (`onMessage`, `onCircuitOpen`, `onShutdown`, etc.)
-   - `getStatus()` for health snapshots
+   - 140+ public methods with clean delegation
+   - Comprehensive JSDoc annotations for full TypeScript IntelliSense
+   - Both default and named `{ InstagramChatAPI }` exports
 
 5. **Supporting Utilities**:
-   - **Logger** (`src/Logger.js`) — Colored console logging with timestamps
+   - **Logger** (`src/Logger.js`) — Colored console logging
    - **Banner** (`src/Banner.js`) — CLI branding display
    - **Utils** (`src/utils.js`) — `withRetry`, `withTimeout`, `exponentialBackoff`, `classifyError`, `formatUptime`, `sleep`
+
+**TypeScript modules (advanced/composition usage, compiled alongside JS)**
+
+Located in `src/api/`, `src/core/`, `src/polling/`, `src/utils/`, `src/types/`:
+- `src/core/client.ts` — `InstagramCore`
+- `src/polling/engine.ts` — `PollingEngine`
+- `src/api/messaging.ts` — `MessagingAPI`
+- `src/api/media.ts` — `MediaAPI`
+- `src/api/threads.ts` — `ThreadsAPI`
+- `src/api/users.ts` — `UsersAPI`
+- `src/api/feeds.ts` — `FeedsAPI`
+- `src/api/posts.ts` — `PostsAPI`
+- `src/api/stories.ts` — `StoriesAPI`
+- `src/api/profile.ts` — `ProfileAPI`
+- `src/api/search.ts` — `SearchAPI`
+
+### Build System
+
+- **`tsconfig.json`**: `allowJs: true`, `checkJs: false` — compiles both `.js` and `.ts` from `src/`
+- **Output**: `dist/` — mirrors `src/` structure with `.js`, `.d.ts`, `.d.ts.map`, `.js.map` for each file
+- **Entry point**: `dist/index.js` (compiled from `src/index.js`)
+- **Types**: `dist/index.d.ts` (auto-generated from JSDoc annotations)
 
 ### Design Patterns
 
@@ -65,16 +86,11 @@ Preferred communication style: Simple, everyday language.
 - **Event Emitter Pattern**: EventEmitter3 for reactive message and lifecycle events
 - **Circuit Breaker Pattern**: Opens after N consecutive errors, auto-recovers after cooldown
 - **Adaptive Polling**: Interval adjusts based on activity (speeds up/slows down)
-- **Dependency Injection**: Components receive dependencies via constructor
 
 ### Authentication Flow
 
 1. **Cookie-based (Recommended)**: Load Netscape cookies → inject into API state → extract user info
 2. **Username/Password**: Generate device fingerprint → login → store session
-
-### Media Processing Pipeline
-
-Input (file or URL) → Download if URL (axios) → Process with Sharp → Upload via API → Cleanup temp files
 
 ### Error Handling
 

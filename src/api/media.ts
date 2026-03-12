@@ -56,9 +56,9 @@ export class MediaAPI {
           ? { width: 1080, height: 1080, fit: 'inside' as const, withoutEnlargement: true }
           : undefined;
 
-        buf = await img.resize(resizeOpts).jpeg({ quality: 85, mozjpeg: true }).toBuffer();
+        buf = Buffer.from(await img.resize(resizeOpts).jpeg({ quality: 85, mozjpeg: true }).toBuffer());
         if (buf.length > PHOTO_MAX_BYTES) {
-          buf = await sharp(original).resize(resizeOpts).jpeg({ quality: 65, mozjpeg: true }).toBuffer();
+          buf = Buffer.from(await sharp(original).resize(resizeOpts).jpeg({ quality: 65, mozjpeg: true }).toBuffer());
         }
       } catch { buf = original; }
 
@@ -175,9 +175,9 @@ export class MediaAPI {
   // ─── Media info & download ─────────────────────────────────────────────────
 
   async getMessageMediaUrl(threadId: string, itemId: string): Promise<MediaInfo> {
-    const threadFeed = this.ig.feed.directThread({ thread_id: threadId });
+    const threadFeed = this.ig.feed.directThread({ thread_id: threadId } as Parameters<typeof this.ig.feed.directThread>[0]);
     const items      = await threadFeed.items();
-    const message    = (items as Array<Record<string, unknown>>).find((i) => i['item_id'] === itemId);
+    const message    = (items as unknown as Array<Record<string, unknown>>).find((i) => i['item_id'] === itemId);
     if (!message) throw new Error(`Message ${itemId} not found in thread ${threadId}`);
 
     const out: MediaInfo = {

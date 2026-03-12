@@ -38,7 +38,7 @@ export class UsersAPI {
   async searchUsers(query: string): Promise<UserInfo[]> {
     try {
       const results = await this.ig.search.users(query);
-      return ((results as Record<string, unknown>)['users'] ?? results ?? []) as UserInfo[];
+      return ((results as unknown as Record<string, unknown>)['users'] ?? results ?? []) as UserInfo[];
     } catch (error) {
       logger.error('Search failed:', (error as Error).message);
       throw new Error(`Search failed: ${(error as Error).message}`);
@@ -110,7 +110,7 @@ export class UsersAPI {
 
   async getBlockedUsers(): Promise<unknown[]> {
     try {
-      const feed = this.ig.feed.accountFollowersYouKnow();
+      const feed = this.ig.feed.accountFollowers();
       return await feed.items();
     } catch (error) {
       logger.error('Failed to get blocked users:', (error as Error).message);
@@ -120,8 +120,10 @@ export class UsersAPI {
 
   async muteUser(userId: string | number, muteStories = false, mutePosts = false): Promise<void> {
     try {
-      await this.ig.friendship.mutePostsOrStoryFromFollow({
-        targetUserId: userId,
+      await (this.ig.friendship as unknown as {
+        mutePostsOrStoryFromFollow(o: Record<string, unknown>): Promise<void>
+      }).mutePostsOrStoryFromFollow({
+        targetUserId: String(userId),
         postMuteStatus: mutePosts ? 1 : 0,
         storyMuteStatus: muteStories ? 1 : 0,
       });
