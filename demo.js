@@ -1,0 +1,36 @@
+import InstagramChatAPI from './src/index.js';
+
+console.log('===========================================');
+console.log('  neokex-ica - Instagram Chat API Library');
+console.log('  Version 2.0.0');
+console.log('===========================================');
+console.log('');
+console.log('This is a Node.js library for Instagram automation.');
+console.log('It provides 60+ methods for messaging, media uploads,');
+console.log('thread management, and social features.');
+console.log('');
+console.log('Available features:');
+console.log('  - Direct messaging (send/receive/reply)');
+console.log('  - Media uploads (photos, videos, stories)');
+console.log('  - Real-time message listening via polling');
+console.log('  - Thread management (create, delete, archive)');
+console.log('  - User operations (follow, unfollow, search)');
+console.log('  - Social features (like, comment, feed)');
+console.log('  - Cookie-based authentication');
+console.log('');
+console.log('Usage example:');
+console.log('');
+console.log("  import InstagramChatAPI from 'neokex-ica';");
+console.log('');
+console.log("  const client = new InstagramChatAPI();");
+console.log("  await client.login('username', 'password');");
+console.log("  await client.sendMessage(threadId, 'Hello!');");
+console.log('');
+console.log('See README.md and EXAMPLES.md for full documentation.');
+console.log('');
+
+const client = new InstagramChatAPI({ showBanner: false });
+console.log('Library loaded successfully!');
+console.log('Client instance created:', typeof client);
+console.log('');
+console.log('Available top-level methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(client)).filter(m => m !== 'constructor').join(', '));
