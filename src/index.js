@@ -10,7 +10,7 @@ class InstagramChatAPI extends InstagramClientV2 {
     this.dm = new DirectMessageV2(this);
 
     if (!bannerShown && options.showBanner !== false) {
-      banner.showSimple('2.2.0');
+      banner.showSimple('1.0.0');
       bannerShown = true;
     }
   }

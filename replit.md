@@ -1,23 +1,22 @@
-# neokex-ica
+# ica-neokex
 
 ## Overview
 
-neokex-ica is a professional Node.js library for Instagram automation and messaging. It provides a comprehensive API wrapper around Instagram's private APIs, enabling developers to build bots, chatbots, and automation tools with 60+ methods for messaging, media sharing, thread management, and social features.
+`ica-neokex` is a professional Node.js library for Instagram automation and messaging. It provides a comprehensive API wrapper around Instagram's private APIs, enabling developers to build bots, chatbots, and automation tools with 124+ methods for messaging, media sharing, thread management, and social features.
 
-**Core Purpose**: Simplify Instagram automation by providing a clean, event-driven interface for direct messaging, content posting, and user interactions.
+**Core Purpose**: Simplify Instagram automation with a clean, event-driven interface for direct messaging, content posting, user interactions, and long-running bot operation.
 
 **Key Capabilities**:
-- Direct messaging and group chat management
-- Media uploads (photos, videos, stories)
-- Real-time message listening with event-driven architecture
-- User operations (follow, unfollow, search)
-- Social features (like, comment, feed access)
+- 124+ API methods covering messaging, media, threads, feeds, social, and profile management
+- Real-time message listening with adaptive polling
+- Circuit breaker with auto-recovery for long-running bots
 - Cookie-based authentication for persistent sessions
+- Graceful shutdown and session expiry detection
+- Full observability via `getStatus()` and `getPollingStats()`
 
 ## Version History
 
-- **v2.2.0** — Long-running bot hardening. Circuit breaker with auto-recovery, adaptive polling interval, per-request HTTP timeouts, shared exponential-backoff retry on all send methods, SIGTERM/SIGINT graceful shutdown, session expiry detection, LRU seenMessageIds eviction, periodic reply-handler sweep, cancelable scheduleMessage(), full observability via getStatus()/getPollingStats(), validateSession()/pingSession(), restartPolling(), error classification (auth/ratelimit/network), fixed getFollowers/getFollowing do-while pagination, uncaughtException/unhandledRejection forwarded to onError.
-- **v2.1.0** — Major bug fixes + 40+ new API methods. Fixed message tracking bug (item_id was read from wrong location in API response), added inbox seeding to prevent duplicate events on startup, replaced full-scan polling with per-thread cursor diffing for efficiency.
+- **v1.0.0** — Public release under `ica-neokex`. Includes all v2.2.0 resilience features: circuit breaker, adaptive polling, per-request timeouts, exponential-backoff retry, SIGTERM/SIGINT graceful shutdown, session expiry detection, LRU seenMessageIds eviction, reply handler sweep, cancelable `scheduleMessage()`, `validateSession()`, `pingSession()`, `restartPolling()`, `getStatus()`, error classification, and `do-while` pagination fix for `getFollowers`/`getFollowing`.
 
 ## User Preferences
 
@@ -27,148 +26,79 @@ Preferred communication style: Simple, everyday language.
 
 ### Module Structure
 
-The application follows a modular architecture with clear separation of concerns:
-
-1. **InstagramClientV2** (`InstagramClientV2.js`) - Core authentication and session management
+1. **InstagramClientV2** (`src/InstagramClientV2.js`) — Core authentication and session management
    - Wraps the `instagram-private-api` library
    - Handles login via username/password or cookie-based authentication
    - Manages device generation and proxy configuration
    - Extends EventEmitter for event-driven architecture
+   - Provides `validateSession()`, `pingSession()`, `getSessionState()`
 
-2. **DirectMessageV2** (`DirectMessageV2.js`) - Messaging operations layer
-   - Handles all DM-related functionality (send, receive, reactions)
-   - Implements polling mechanism for real-time message listening
-   - Manages inbox retrieval and thread operations
-   - Processes media uploads with Sharp image processing
+2. **DirectMessageV2** (`src/DirectMessageV2.js`) — Messaging and polling layer
+   - All DM operations: send, receive, reactions, media uploads
+   - Adaptive polling loop with circuit breaker
+   - Per-request HTTP timeout (`withTimeout`)
+   - `withRetry` on all send operations
+   - LRU seenMessageIds eviction (cap 5k)
+   - Periodic reply-handler sweep
+   - SIGTERM/SIGINT graceful shutdown
+   - `getPollingStats()` and `restartPolling()`
 
-3. **CookieManager** (`CookieManager.js`) - Cookie persistence layer
+3. **CookieManager** (`src/CookieManager.js`) — Cookie persistence
    - Parses Netscape-format cookie files
-   - Handles cookie serialization/deserialization
+   - Handles serialization/deserialization
    - Enables session restoration without repeated logins
 
-4. **InstagramChatAPI** (`index.js`) - Main API facade
-   - Entry point that combines client and DM functionality
-   - Provides simplified, high-level methods
-   - Manages banner display on initialization
+4. **InstagramChatAPI** (`src/index.js`) — Main API facade
+   - Entry point combining client and DM functionality
+   - 124+ public methods with clean delegation
+   - Event helper methods (`onMessage`, `onCircuitOpen`, `onShutdown`, etc.)
+   - `getStatus()` for health snapshots
 
 5. **Supporting Utilities**:
-   - **Logger** (`Logger.js`) - Colored console logging with timestamps
-   - **Banner** (`Banner.js`) - CLI branding display
-   - **Utils** (`utils.js`) - Helper functions (UUID generation, signatures, sleep)
+   - **Logger** (`src/Logger.js`) — Colored console logging with timestamps
+   - **Banner** (`src/Banner.js`) — CLI branding display
+   - **Utils** (`src/utils.js`) — `withRetry`, `withTimeout`, `exponentialBackoff`, `classifyError`, `formatUptime`, `sleep`
 
 ### Design Patterns
 
-**Facade Pattern**: The `InstagramChatAPI` class provides a simplified interface that delegates to specialized components (client, DM manager).
-
-**Event Emitter Pattern**: Extends EventEmitter3 for reactive message handling and lifecycle events (login, new messages).
-
-**Polling Strategy**: Real-time message listening implemented via configurable interval polling rather than WebSocket connections (Instagram API limitation).
-
-**Dependency Injection**: Components receive dependencies through constructor injection (e.g., DirectMessageV2 receives client instance).
+- **Facade Pattern**: `InstagramChatAPI` delegates to specialized components
+- **Event Emitter Pattern**: EventEmitter3 for reactive message and lifecycle events
+- **Circuit Breaker Pattern**: Opens after N consecutive errors, auto-recovers after cooldown
+- **Adaptive Polling**: Interval adjusts based on activity (speeds up/slows down)
+- **Dependency Injection**: Components receive dependencies via constructor
 
 ### Authentication Flow
 
-1. **Cookie-based (Recommended)**:
-   - Load Netscape-format cookies from file
-   - Deserialize and inject into instagram-private-api state
-   - Extract user info from cookie session
-   - Skip password authentication entirely
-
-2. **Username/Password**:
-   - Generate device fingerprint
-   - Call instagram-private-api login
-   - Store session credentials
-   - Emit login event with user details
-
-**Rationale**: Cookie-based auth reduces rate limiting risks and avoids triggering Instagram's security challenges.
+1. **Cookie-based (Recommended)**: Load Netscape cookies → inject into API state → extract user info
+2. **Username/Password**: Generate device fingerprint → login → store session
 
 ### Media Processing Pipeline
 
-1. **Input**: File path or URL
-2. **Download** (if URL): Fetch using axios
-3. **Processing**: Sharp library converts/resizes images
-4. **Upload**: instagram-private-api handles multipart upload
-5. **Cleanup**: Temporary files deleted
+Input (file or URL) → Download if URL (axios) → Process with Sharp → Upload via API → Cleanup temp files
 
-**Technology Choice**: Sharp chosen for high-performance image processing with minimal dependencies.
+### Error Handling
 
-### Error Handling Strategy
+- `classifyError()` categorizes errors as `auth`, `ratelimit`, `network`, or `unknown`
+- `withRetry()` applies per-type backoff: auth = no retry, ratelimit = 10s–120s, network = 2s–30s
+- Circuit breaker prevents repeated calls during outage periods
+- `uncaughtException` and `unhandledRejection` forwarded to `onError` handlers
 
-- Comprehensive try-catch blocks in all async operations
-- Graceful degradation (e.g., returns empty inbox if endpoint fails)
-- Colored logger output for visibility
-- Error details exposed through Error objects with context
+## Runtime Requirements
 
-### Message Polling Architecture
-
-**Problem**: Instagram doesn't provide WebSocket/real-time APIs  
-**Solution**: Configurable interval-based polling of inbox feed  
-**Implementation**:
-- Tracks last sequence ID to detect new messages
-- Compares current inbox state with previous snapshot
-- Emits events only for genuinely new messages
-- Configurable interval (default 5000ms)
-
-**Trade-offs**:
-- ✅ Simple, reliable implementation
-- ✅ Works with Instagram's request/response API
-- ❌ Not truly real-time (polling delay)
-- ❌ Increased API request volume
-
-## External Dependencies
-
-### Core NPM Packages
-
-1. **instagram-private-api** (v1.46.1)
-   - Purpose: Instagram private API client
-   - Usage: All Instagram API interactions (login, messaging, feeds)
-   - Critical dependency - entire library wraps this
-
-2. **axios** (v1.6.2)
-   - Purpose: HTTP client for media downloads
-   - Usage: Fetching images from URLs before upload
-
-3. **sharp** (v0.34.4)
-   - Purpose: High-performance image processing
-   - Usage: Converting, resizing, and optimizing images before upload
-   - Native dependency with platform-specific binaries
-
-4. **form-data** (v4.0.4)
-   - Purpose: Multipart form construction
-   - Usage: Media upload payloads
-
-5. **eventemitter3** (v5.0.1)
-   - Purpose: Lightweight event emitter implementation
-   - Usage: Event-driven architecture for message handling
-
-### Instagram API Integration
-
-- **Type**: Private/undocumented REST API
-- **Base URL**: `https://i.instagram.com/api/v1/`
-- **Authentication**: Session cookies + device fingerprints
-- **Key Endpoints Used**:
-  - `/direct_v2/inbox/` - Thread listing
-  - `/direct_v2/threads/{id}/items/` - Message retrieval
-  - `/direct_v2/threads/broadcast/text/` - Send messages
-  - `/media/configure/` - Media uploads
-  - `/friendships/` - Follow operations
-  - `/users/` - User information
-
-**Important**: No official API - relies on reverse-engineered endpoints that may change without notice.
-
-### File System Operations
-
-- Cookie file I/O (Netscape format)
-- Temporary image file handling during media processing
-- No persistent database - stateless operation
-
-### Runtime Requirements
-
-- **Node.js**: >=16.0.0 (ES modules support)
+- **Node.js**: >=20.0.0 (required by Sharp v0.34)
 - **Platform**: Cross-platform (Windows/macOS/Linux)
 - **Native Dependencies**: Sharp requires platform-specific binaries
 
-### Environment Variables
+## External Dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| instagram-private-api | ^1.46.1 | Core Instagram API client |
+| axios | ^1.6.2 | HTTP client for media downloads |
+| sharp | ^0.34.4 | High-performance image processing |
+| form-data | ^4.0.4 | Multipart form construction |
+| eventemitter3 | ^5.0.1 | Lightweight event emitter |
+
+## Environment Variables
 
 - `IG_PROXY` (optional): HTTP proxy URL for API requests
-- No other configuration required - library is self-contained

@@ -1,32 +1,16 @@
-# neokex-ica Examples
+# ica-neokex Examples
 
-Complete examples for using the neokex-ica Instagram Chat API library.
+Complete examples for using the ica-neokex Instagram Chat API library.
 
-## 📚 Table of Contents
+## Table of Contents
 
-- [Basic Setup](#basic-setup)
 - [Authentication](#authentication)
 - [Sending Messages](#sending-messages)
 - [Media Sharing](#media-sharing)
 - [Thread Management](#thread-management)
 - [User Operations](#user-operations)
 - [Building Bots](#building-bots)
-
----
-
-## Basic Setup
-
-### Installation
-
-```bash
-npm install neokex-ica
-```
-
-### Import
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-```
+- [Advanced Patterns](#advanced-patterns)
 
 ---
 
@@ -35,11 +19,12 @@ import InstagramChatAPI from 'neokex-ica';
 ### Cookie-Based Login (Recommended)
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 
-// Load cookies from file (Netscape format)
+// Load cookies exported from your browser (Netscape format)
+// Use the "Get cookies.txt" extension for Chrome/Firefox
 await bot.loadCookiesFromFile('./cookies.txt');
 
 console.log(`Logged in as: ${bot.getCurrentUsername()}`);
@@ -48,19 +33,33 @@ console.log(`Logged in as: ${bot.getCurrentUsername()}`);
 ### Username/Password Login
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 
 try {
   await bot.login('username', 'password');
   console.log('Login successful!');
-  
+
   // Save cookies for next time
   await bot.saveCookiesToFile('./cookies.txt');
 } catch (error) {
   console.error('Login failed:', error.message);
 }
+```
+
+### Session Health Check
+
+```javascript
+const result = await bot.validateSession();
+if (!result.valid) {
+  console.error('Session expired, please refresh cookies');
+  process.exit(1);
+}
+
+// Lightweight ping (no event emission)
+const alive = await bot.pingSession();
+console.log('Session alive:', alive);
 ```
 
 ---
@@ -71,46 +70,112 @@ try {
 
 ```javascript
 // To a thread
-await bot.dm.sendMessage('thread_id', 'Hello!');
+await bot.sendMessage('thread_id', 'Hello!');
 
 // To a user (creates thread if needed)
-await bot.dm.sendMessageToUser('user_id', 'Hi there!');
+await bot.sendMessageToUser('user_id', 'Hi there!');
 ```
 
-### Send with Error Handling
+### Send with onReply Callback
 
 ```javascript
-try {
-  await bot.dm.sendMessageToUser('user_id', 'Hello!');
-  console.log('✅ Message sent!');
-} catch (error) {
-  console.error('❌ Failed:', error.message);
-}
+await bot.sendMessageWithReply(
+  'thread_id',
+  'What is your name?',
+  async (reply) => {
+    await bot.sendMessage(reply.thread_id, `Nice to meet you, ${reply.text}!`);
+  }
+);
+```
+
+### Interactive Menu with onReply
+
+```javascript
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me) return;
+
+  if (msg.text === '!menu') {
+    await bot.sendMessageWithReply(
+      msg.thread_id,
+      'Menu:\n1. Products\n2. Support\n3. Pricing\n\nReply with a number:',
+      async (reply) => {
+        const responses = {
+          '1': 'Here are our products...',
+          '2': 'Contact support at...',
+          '3': 'Pricing: $10/month',
+        };
+        const text = responses[reply.text.trim()] ?? 'Invalid choice. Try !menu again.';
+        await bot.sendMessage(reply.thread_id, text);
+      },
+      { replyTimeout: 60000 }
+    );
+  }
+});
+```
+
+### Scheduled Message
+
+```javascript
+// Send after 60 seconds
+const scheduled = bot.scheduleMessage('thread_id', 'Reminder!', 60000);
+
+// Cancel before it fires
+scheduled.cancel();
+```
+
+### Bulk DM Sender
+
+```javascript
+const recipients = ['user_id_1', 'user_id_2', 'user_id_3'];
+
+await bot.sendMessageBulk(recipients, 'Hey! Check out our new product!', {
+  delay: 3000, // 3 seconds between each send
+});
 ```
 
 ---
 
 ## Media Sharing
 
-### Send Photo from File
+### Send Photo
 
 ```javascript
-await bot.dm.sendPhoto('thread_id', './photo.jpg');
+// From file
+await bot.sendPhoto('thread_id', './photo.jpg');
+
+// From URL (auto-downloads and processes)
+await bot.sendPhotoFromUrl('thread_id', 'https://picsum.photos/800/600');
 ```
 
-### Send Photo from URL
+### Send Video
 
 ```javascript
-const photoUrl = 'https://picsum.photos/800/600';
-await bot.dm.sendPhotoFromUrl('thread_id', photoUrl);
+await bot.sendVideo('thread_id', './video.mp4');
+await bot.sendVideoFromUrl('thread_id', 'https://example.com/video.mp4');
+```
+
+### Media Download Bot
+
+```javascript
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me || !msg.message?.media) return;
+
+  const mediaUrls = await bot.getMessageMediaUrl(msg.thread_id, msg.item_id);
+
+  if (mediaUrls.media.videos?.length > 0) {
+    const dl = await bot.downloadMessageMedia(msg.thread_id, msg.item_id, './downloads/video.mp4');
+    console.log(`Downloaded to: ${dl.path} (${dl.size} bytes)`);
+  }
+});
 ```
 
 ### Send Link
 
 ```javascript
-await bot.dm.sendLink('thread_id', 
-  'https://github.com/NeoKEX/neokex-ica',
-  'Check out this awesome library!'
+await bot.sendLink(
+  'thread_id',
+  'https://github.com/NeoKEX/ica-neokex',
+  'Check out this library!'
 );
 ```
 
@@ -123,321 +188,184 @@ await bot.dm.sendLink('thread_id',
 ```javascript
 const inbox = await bot.getInbox();
 
-inbox.threads.forEach(thread => {
-  const username = thread.users?.[0]?.username || 'Unknown';
-  console.log(`- @${username}`);
+inbox.threads.forEach((thread) => {
+  const username = thread.users?.[0]?.username ?? 'Unknown';
+  const lastMsg  = thread.last_permanent_item?.text ?? '(media)';
+  console.log(`@${username}: ${lastMsg}`);
 });
 ```
 
-### Get Specific Thread
+### Thread Operations
 
 ```javascript
-const thread = await bot.dm.getThread('thread_id');
-console.log(`Messages: ${thread.items.length}`);
-```
-
-### Mute/Unmute Thread
-
-```javascript
-// Mute
-await bot.dm.muteThread('thread_id');
-
-// Unmute
-await bot.dm.unmuteThread('thread_id');
-```
-
-### Delete Thread
-
-```javascript
-await bot.dm.deleteThread('thread_id');
+await bot.muteThread('thread_id');
+await bot.unmuteThread('thread_id');
+await bot.archiveThread('thread_id');
+await bot.approveThread('thread_id');   // accept pending request
+await bot.deleteThread('thread_id');
+await bot.updateThreadTitle('thread_id', 'New Group Name');
 ```
 
 ---
 
 ## User Operations
 
-### Search Users
+### Search & Info
 
 ```javascript
 const results = await bot.searchUsers('username');
-results.forEach(user => {
-  console.log(`@${user.username} - ${user.full_name}`);
-});
-```
+results.forEach(user => console.log(`@${user.username} — ${user.full_name}`));
 
-### Get User Info
-
-```javascript
-// By ID
-const user = await bot.getUserInfo('user_id');
-
-// By username
 const user = await bot.getUserInfoByUsername('instagram');
-
-console.log(`
-  Username: ${user.username}
-  Name: ${user.full_name}
-  Followers: ${user.follower_count}
-  Following: ${user.following_count}
-`);
+console.log(`Followers: ${user.follower_count}`);
 ```
 
-### Follow/Unfollow
+### Social Actions
 
 ```javascript
-// Follow
 await bot.followUser('user_id');
-
-// Unfollow
 await bot.unfollowUser('user_id');
+await bot.blockUser('user_id');
+await bot.unblockUser('user_id');
+```
+
+### Get Followers / Following
+
+```javascript
+// Paginated — fetches up to 200 followers
+const followers = await bot.getFollowers('user_id', 200);
+const following = await bot.getFollowing('user_id', 200);
 ```
 
 ---
 
 ## Building Bots
 
-### Auto-Reply Bot
+### Resilient Long-Running Bot
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 await bot.loadCookiesFromFile('./cookies.txt');
 
-// Listen for messages
-bot.on('message', async (message) => {
-  const { threadId, text, userId } = message;
-  
-  // Don't reply to yourself
-  if (userId === bot.getCurrentUserID()) return;
-  
-  console.log(`New message: ${text}`);
-  
-  // Auto-reply
-  await bot.dm.sendMessage(threadId, 
-    `Thanks for your message! You said: "${text}"`
-  );
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me) return;
+  console.log(`[${msg.thread_id}] ${msg.text}`);
+  await bot.sendMessage(msg.thread_id, `Echo: ${msg.text}`);
 });
 
-// Start polling every 5 seconds
-bot.dm.startPolling(5000);
-console.log('Auto-reply bot started!');
+bot.onError((err) => console.error('Bot error:', err.message));
+
+// Restart process on session expiry (let PM2/systemd handle restart)
+bot.onSessionExpired(() => process.exit(1));
+
+bot.onCircuitOpen(({ cooldown }) => {
+  console.log(`Circuit open — pausing ${cooldown / 1000}s`);
+});
+
+bot.onCircuitClosed(() => console.log('Circuit closed — back online'));
+bot.onShutdown(() => console.log('Shutdown complete'));
+
+await bot.startListening({
+  interval:             5000,
+  minInterval:          3000,
+  maxInterval:         30000,
+  maxConsecutiveErrors:    5,
+  circuitCooldown:     60000,
+});
 ```
 
 ### Keyword Bot
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 await bot.loadCookiesFromFile('./cookies.txt');
 
-const keywords = {
-  'hello': 'Hi there! How can I help you?',
-  'help': 'Available commands: hello, help, info',
-  'info': 'This is an automated Instagram bot!'
+const responses = {
+  hello: 'Hi there! How can I help you?',
+  help:  'Commands: hello, help, info',
+  info:  'This bot is powered by ica-neokex.',
 };
 
-bot.on('message', async (message) => {
-  const { threadId, text, userId } = message;
-  
-  if (userId === bot.getCurrentUserID()) return;
-  
-  const lowerText = text.toLowerCase();
-  
-  for (const [keyword, response] of Object.entries(keywords)) {
-    if (lowerText.includes(keyword)) {
-      await bot.dm.sendMessage(threadId, response);
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me) return;
+
+  const text = msg.text?.toLowerCase() ?? '';
+  for (const [keyword, reply] of Object.entries(responses)) {
+    if (text.includes(keyword)) {
+      await bot.sendMessage(msg.thread_id, reply);
       break;
     }
   }
 });
 
-bot.dm.startPolling(5000);
+await bot.startListening(5000);
 ```
 
-### Bulk Message Sender
+### Auto-React Bot
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me) return;
 
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
+  const text = msg.text?.toLowerCase() ?? '';
+  let emoji = null;
 
-const recipients = ['user_id_1', 'user_id_2', 'user_id_3'];
-const message = 'Hey! Check out our new product!';
+  if (text.includes('love'))  emoji = '❤️';
+  else if (text.includes('lol') || text.includes('funny')) emoji = '😂';
+  else if (text.includes('thanks')) emoji = '🙏';
 
-for (const userId of recipients) {
-  try {
-    await bot.dm.sendMessageToUser(userId, message);
-    console.log(`✅ Sent to ${userId}`);
-    
-    // Wait 3 seconds between messages to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  } catch (error) {
-    console.error(`❌ Failed for ${userId}:`, error.message);
-  }
-}
-
-console.log('Bulk sending complete!');
-```
-
-### Inbox Monitor
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-async function checkInbox() {
-  const inbox = await bot.getInbox();
-  
-  console.log(`\n📬 Inbox Summary:`);
-  console.log(`Total conversations: ${inbox.threads.length}`);
-  console.log(`Unseen messages: ${inbox.unseen_count}\n`);
-  
-  inbox.threads.slice(0, 5).forEach((thread, i) => {
-    const username = thread.users?.[0]?.username || 'Unknown';
-    const lastMsg = thread.last_permanent_item?.text || '(media)';
-    console.log(`${i + 1}. @${username}`);
-    console.log(`   "${lastMsg.substring(0, 50)}..."\n`);
-  });
-}
-
-// Check inbox every minute
-setInterval(checkInbox, 60000);
-checkInbox(); // Initial check
-```
-
-### Photo Sharing Bot
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-bot.on('message', async (message) => {
-  const { threadId, text, userId } = message;
-  
-  if (userId === bot.getCurrentUserID()) return;
-  
-  if (text.toLowerCase().includes('send photo')) {
-    // Send a random photo from URL
-    const photoUrl = 'https://picsum.photos/800/600';
-    await bot.dm.sendPhotoFromUrl(threadId, photoUrl);
-    await bot.dm.sendMessage(threadId, 'Here\'s a random photo for you!');
-  }
+  if (emoji) await bot.sendReaction(msg.thread_id, msg.item_id, emoji);
 });
-
-bot.dm.startPolling(5000);
 ```
 
 ---
 
-## Advanced Examples
+## Advanced Patterns
 
-### Rate Limiting Handler
+### Health Monitoring
 
 ```javascript
-async function sendWithRetry(fn, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error.message.includes('429') || error.message.includes('rate')) {
-        const delay = Math.pow(2, i) * 1000; // Exponential backoff
-        console.log(`Rate limited, waiting ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } else {
-        throw error;
-      }
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
-
-// Usage
-await sendWithRetry(() => 
-  bot.dm.sendMessage('thread_id', 'Hello!')
-);
+setInterval(() => {
+  const status = bot.getStatus();
+  const s = status.pollingStats;
+  console.log(
+    `[Health] uptime=${s.uptimeFormatted} polls=${s.totalPolls}` +
+    ` errors=${s.totalErrors} circuit=${s.circuitOpen ? 'OPEN' : 'closed'}` +
+    ` interval=${s.currentInterval}ms`
+  );
+}, 60000);
 ```
 
-### Multi-User Message Reactions
+### Error Handling
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-bot.on('message', async (message) => {
-  const { threadId, itemId, text, userId } = message;
-  
-  if (userId === bot.getCurrentUserID()) return;
-  
-  // React to messages containing keywords
-  if (text.includes('love')) {
-    await bot.dm.sendReaction(threadId, itemId, '❤️');
-  } else if (text.includes('funny') || text.includes('lol')) {
-    await bot.dm.sendReaction(threadId, itemId, '😂');
-  } else if (text.includes('thanks')) {
-    await bot.dm.sendReaction(threadId, itemId, '🙏');
+bot.onError((err) => {
+  if (err.type === 'auth') {
+    console.error('Auth failure — exiting');
+    process.exit(1);
+  }
+  if (err.type === 'ratelimit') {
+    console.warn('Rate limit hit — circuit breaker will handle it');
   }
 });
-
-bot.dm.startPolling(5000);
 ```
 
----
+### Environment Variables
 
-## Tips & Best Practices
-
-### 1. Rate Limiting
-Always add delays between requests:
 ```javascript
-await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds
-```
+import 'dotenv/config';
 
-### 2. Error Handling
-Wrap all API calls in try-catch:
-```javascript
-try {
-  await bot.dm.sendMessage(threadId, text);
-} catch (error) {
-  console.error('Error:', error.message);
-}
-```
-
-### 3. Cookie Authentication
-Use cookies instead of username/password for better reliability:
-```javascript
-await bot.loadCookiesFromFile('./cookies.txt');
-```
-
-### 4. Environment Variables
-Store sensitive data in environment variables:
-```javascript
-import dotenv from 'dotenv';
-dotenv.config();
-
-const username = process.env.IG_USERNAME;
-const password = process.env.IG_PASSWORD;
-```
-
-### 5. Logging
-Add logging for debugging:
-```javascript
-console.log(`Sending message to ${userId}...`);
-await bot.dm.sendMessageToUser(userId, text);
-console.log('✅ Message sent!');
+await bot.loadCookiesFromFile(process.env.COOKIES_PATH ?? './cookies.txt');
 ```
 
 ---
 
 ## Need Help?
 
-- [GitHub Issues](https://github.com/NeoKEX/neokex-ica/issues)
-- [npm Package](https://www.npmjs.com/package/neokex-ica)
+- [GitHub Issues](https://github.com/NeoKEX/ica-neokex/issues)
+- [npm Package](https://www.npmjs.com/package/ica-neokex)
 - [Main README](./README.md)

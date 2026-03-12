@@ -1,88 +1,109 @@
-# neokex-ica
+# ica-neokex
 
 > **Professional Instagram Chat API for Node.js**
 
-A powerful, production-ready Instagram automation library with 60+ methods for building Instagram bots, chatbots, and automation tools. Send messages, photos, manage threads, automate interactions, and more.
+A powerful, production-ready Instagram automation library with 124+ methods for building Instagram bots, chatbots, and automation tools. Send messages, photos, videos, manage threads, automate social interactions, and more — built for long-running bots with enterprise-grade resilience.
 
-[![npm version](https://img.shields.io/npm/v/neokex-ica.svg)](https://www.npmjs.com/package/neokex-ica)
+[![npm version](https://img.shields.io/npm/v/ica-neokex.svg)](https://www.npmjs.com/package/ica-neokex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This is an **unofficial** library that uses Instagram's private/internal APIs. Using this may violate Instagram's Terms of Service and could result in account restrictions or bans. **Use at your own risk, for educational purposes only.**
 
 ---
 
-## ✨ Features
+## Features
 
-### 📱 Complete Messaging Suite
-- ✅ **Text Messages** - Send to threads or users with reply support
-- ✅ **Photo/Video Uploads** - Send media from files or URLs with auto-processing
-- ✅ **GIFs & Animated Media** - Send GIFs and animated stickers
-- ✅ **Link Sharing** - Share URLs with previews
-- ✅ **Reactions** - React to messages with emojis
-- ✅ **Message Editing** - Edit sent messages
-- ✅ **Unsend Messages** - Delete sent messages
-- ✅ **Mark as Seen** - Read receipts
-- ✅ **onReply Handlers** - Advanced callback pattern for handling replies (like ws3-fca)
-- ✅ **Media Download** - Extract and download video/image URLs from messages
-- ✅ **Message Forwarding** - Forward media between threads
+### Complete Messaging Suite
+- **Text Messages** — Send to threads or users with reply support and bulk delivery
+- **Scheduled Messages** — Schedule messages with cancelable promises
+- **Photo/Video Uploads** — Send media from files or URLs with auto-processing
+- **GIFs & Animated Media** — Send GIFs and animated stickers
+- **Link Sharing** — Share URLs with previews
+- **Reactions** — React to messages with emojis
+- **Message Editing** — Edit sent messages
+- **Unsend Messages** — Delete sent messages
+- **Mark as Seen** — Read receipts
+- **onReply Handlers** — Advanced callback pattern for handling replies
+- **Media Download** — Extract and download video/image URLs from messages
+- **Message Forwarding** — Forward media between threads
 
-### 🎯 Thread Management
+### Thread Management
 - Get inbox and filter conversations
-- Mute/unmute threads
-- Archive/unarchive conversations
-- Delete threads
+- Mute/unmute, archive/unarchive, delete threads
 - Approve pending message requests
+- Add/remove participants, update thread titles
 - Typing indicators
 
-### 👥 User Operations
-- Get user information by ID or username
-- Search users
-- Get followers & following lists
-- Get timeline feed
-- Get user feed
+### User & Social
+- Get user info by ID or username
+- Search users, get followers & following lists
+- Follow/unfollow, block/unblock, mute users
+- Friendship status checks (single and bulk)
+- Get blocked users list
 
-### 🎨 Social Features
-- Like/unlike posts
-- Comment on posts
-- Follow/unfollow users
-- Upload photos to feed
-- Upload stories
-- Get media information
+### Content & Feeds
+- Timeline feed, user feed, hashtag feed, explore feed
+- Stories, reels tray candidates
+- Activity feed and notifications
+- Location-based feeds
 
-### 🔐 Authentication
-- Cookie-based authentication (recommended)
-- Username/password login
-- Session management
-- Automatic re-authentication
+### Post Interactions
+- Like/unlike posts and comments
+- Comment, delete comments
+- Get media info, tagged posts, saved posts
+- Save/unsave posts, delete posts
+- Upload photos, videos, carousels, and stories
+
+### Profile Management
+- Edit profile details
+- Set or remove profile picture
+- Change password
+
+### Long-Running Bot Resilience
+- **Circuit breaker** — opens after N consecutive errors, auto-recovers after cooldown
+- **Adaptive polling** — speeds up on activity, slows down when quiet
+- **Per-request timeout** — hung HTTP calls never stall the polling loop
+- **Exponential backoff retry** — all send methods auto-retry on transient errors
+- **Graceful shutdown** — SIGTERM/SIGINT handled cleanly with event emission
+- **Session expiry detection** — emits `session:expired` and stops safely
+- **LRU seenMessageIds eviction** — capped at 5,000, evicts oldest 2,500 automatically
+- **Reply handler sweep** — periodic cleanup of expired handlers (no leaks)
+- **Error classification** — `auth`, `ratelimit`, `network`, `unknown`
+
+### Observability
+- `getStatus()` — overall bot health snapshot
+- `getPollingStats()` — uptime, poll count, error count, circuit state, interval
+- `validateSession()` — full session check with event emission
+- `pingSession()` — lightweight boolean health check
+- `restartPolling()` — recover polling without full restart
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
-npm install neokex-ica
+npm install ica-neokex
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Cookie Authentication (Recommended)
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 
-// Load cookies from file (Netscape format)
-// Export using browser extension: "Get cookies.txt" (Chrome/Firefox)
+// Export cookies from your browser using "Get cookies.txt" extension (Netscape format)
 await bot.loadCookiesFromFile('./cookies.txt');
 
-// Send a text message
-await bot.dm.sendMessage('thread_id', 'Hello from neokex-ica!');
+// Send a message
+await bot.sendMessage('thread_id', 'Hello from ica-neokex!');
 
 // Get inbox
 const inbox = await bot.getInbox();
@@ -92,474 +113,315 @@ console.log(`You have ${inbox.threads.length} conversations`);
 ### Option 2: Username/Password Login
 
 ```javascript
-import InstagramChatAPI from 'neokex-ica';
+import InstagramChatAPI from 'ica-neokex';
 
 const bot = new InstagramChatAPI();
 
-// Login
 await bot.login('your_username', 'your_password');
 
-// Save session for later reuse
+// Save session for reuse
 await bot.saveCookiesToFile('./cookies.txt');
 
-// Use the bot
-await bot.dm.sendMessageToUser('user_id', 'Hi there!');
+await bot.sendMessageToUser('user_id', 'Hi there!');
 ```
 
 ---
 
-## 📚 API Reference
-
-### Authentication Methods
+## Resilient Bot (Recommended for Long-Running Bots)
 
 ```javascript
-// Login with username and password
+import InstagramChatAPI from 'ica-neokex';
+
+const bot = new InstagramChatAPI();
+await bot.loadCookiesFromFile('./cookies.txt');
+
+bot.onMessage(async (msg) => {
+  if (msg.is_from_me) return;
+  await bot.sendMessage(msg.thread_id, `You said: ${msg.text}`);
+});
+
+bot.onSessionExpired(() => {
+  console.log('Session expired — restarting process');
+  process.exit(1); // let your process manager restart
+});
+
+bot.onCircuitOpen(({ cooldown }) => {
+  console.log(`Too many errors — pausing ${cooldown / 1000}s`);
+});
+
+bot.onCircuitClosed(() => console.log('Back online'));
+bot.onShutdown(() => console.log('Clean shutdown'));
+
+await bot.startListening({
+  interval:             5000,   // start polling at 5s
+  minInterval:          3000,   // never faster than 3s
+  maxInterval:         30000,   // never slower than 30s
+  maxConsecutiveErrors:    5,   // open circuit after 5 errors
+  circuitCooldown:     60000,   // wait 60s before retrying
+});
+```
+
+---
+
+## API Reference
+
+### Authentication
+
+```javascript
 await bot.login(username, password);
-
-// Load cookies from file
 await bot.loadCookiesFromFile('./cookies.txt');
-
-// Save cookies to file
 await bot.saveCookiesToFile('./cookies.txt');
-
-// Get current user info
-const userId = bot.getCurrentUserID();
+const userId   = bot.getCurrentUserID();
 const username = bot.getCurrentUsername();
+const state    = await bot.getSessionState();
+await bot.loadSessionState(state);
+const result   = await bot.validateSession(); // { valid, userId, username }
+const alive    = await bot.pingSession();     // true / false
 ```
 
-### Messaging Methods
+### Messaging
 
 ```javascript
-// Send text message to thread
 await bot.sendMessage(threadId, 'Hello!');
+await bot.sendMessage(threadId, 'Reply', { replyToItemId: 'msg_id' });
+await bot.sendMessageToUser(userId, 'Hi!');
 
-// Send text message with reply to another message
-await bot.sendMessage(threadId, 'Reply text', { replyToItemId: 'message_id' });
+const scheduled = bot.scheduleMessage(threadId, 'Reminder!', 60000);
+scheduled.cancel(); // cancel before it fires
 
-// Send text message to user (creates thread if needed)
-await bot.sendMessageToUser(userId, 'Hello!');
+await bot.sendMessageBulk(['id1', 'id2'], 'Broadcast!', { delay: 2000 });
 
-// Send photo from file
+await bot.sendMessageWithReply(threadId, 'What is your name?', async (reply) => {
+  await bot.sendMessage(reply.thread_id, `Nice to meet you, ${reply.text}!`);
+});
+```
+
+### Media
+
+```javascript
 await bot.sendPhoto(threadId, './image.jpg');
-
-// Send photo from URL
 await bot.sendPhotoFromUrl(threadId, 'https://example.com/image.jpg');
-
-// Send video from URL
+await bot.sendVideo(threadId, './video.mp4');
 await bot.sendVideoFromUrl(threadId, 'https://example.com/video.mp4');
-
-// Send GIF
+await bot.sendVoiceNote(threadId, './audio.m4a');
 await bot.sendGif(threadId, 'giphy_id');
-
-// Send animated media
-await bot.sendAnimatedMedia(threadId, 'media_id');
-
-// Share media to thread
-await bot.shareMediaToThread(threadId, 'media_id', 'Optional message');
-
-// Send link
-await bot.sendLink(threadId, 'https://example.com', 'Check this out!');
-
-// Send sticker
 await bot.sendSticker(threadId, 'sticker_id');
+await bot.sendLink(threadId, 'https://example.com', 'Check this out!');
+await bot.shareMediaToThread(threadId, 'media_id');
+```
 
-// React to message
+### Message Actions
+
+```javascript
 await bot.sendReaction(threadId, itemId, '❤️');
-
-// Remove reaction
 await bot.removeReaction(threadId, itemId);
-
-// Edit message
-await bot.editMessage(threadId, itemId, 'New text');
-
-// Unsend message
+await bot.editMessage(threadId, itemId, 'Updated text');
 await bot.unsendMessage(threadId, itemId);
-
-// Mark message as seen
-await bot.markAsSeen(threadId, itemId);
-
-// Show typing indicator
-await bot.indicateTyping(threadId, true);
-```
-
-### Advanced Messaging - onReply Callbacks (like ws3-fca)
-
-```javascript
-// Send message and wait for reply
-await bot.sendMessageWithReply(threadId, 'What is your name?', async (replyEvent) => {
-  const userName = replyEvent.text;
-  await bot.sendMessage(replyEvent.thread_id, `Nice to meet you, ${userName}!`);
-});
-
-// Or register reply handler manually
-const result = await bot.sendMessage(threadId, 'Pick a number: 1, 2, or 3');
-bot.registerReplyHandler(result.item_id, async (replyEvent) => {
-  const choice = replyEvent.text;
-  await bot.sendMessage(threadId, `You chose: ${choice}`);
-});
-
-// Clear a reply handler
-bot.clearReplyHandler(itemId);
-```
-
-### Media Download & URLs
-
-```javascript
-// Get media URLs from a message (supports images, videos, carousels)
-const mediaInfo = await bot.getMessageMediaUrl(threadId, itemId);
-console.log(mediaInfo.media.videos); // Array of video URLs with different qualities
-console.log(mediaInfo.media.images); // Array of image URLs
-
-// Download media from a message
-const downloaded = await bot.downloadMessageMedia(threadId, itemId, './save/path.mp4');
-console.log(`Downloaded to: ${downloaded.path}`);
-console.log(`File size: ${downloaded.size} bytes`);
-console.log(`Download URL: ${downloaded.url}`);
-
-// Forward message to another thread
 await bot.forwardMessage(fromThreadId, toThreadId, itemId);
+await bot.markAsSeen(threadId, itemId);
+await bot.markAllThreadsSeen();
+await bot.indicateTyping(threadId, true);
+
+const media = await bot.getMessageMediaUrl(threadId, itemId);
+const dl    = await bot.downloadMessageMedia(threadId, itemId, './video.mp4');
 ```
 
-### Inbox & Thread Management
+### Inbox & Threads
 
 ```javascript
-// Get inbox
-const inbox = await bot.getInbox();
+const inbox   = await bot.getInbox();
+const full    = await bot.getFullInbox();
+const unread  = await bot.getUnreadThreads();
+const thread  = await bot.getThread(threadId);
+const msgs    = await bot.getThreadMessages(threadId, 20);
+const members = await bot.getThreadParticipants(threadId);
+const id      = await bot.getThreadIdByUsername('username');
+await bot.createThread(['user_id_1', 'user_id_2']);
 
-// Get specific thread
-const thread = await bot.dm.getThread(threadId);
-
-// Get pending message requests
-const pending = await bot.dm.getPendingInbox();
-
-// Approve pending thread
-await bot.dm.approveThread(threadId);
-
-// Mute thread
-await bot.dm.muteThread(threadId);
-
-// Unmute thread
-await bot.dm.unmuteThread(threadId);
-
-// Delete thread
-await bot.dm.deleteThread(threadId);
+await bot.approveThread(threadId);
+await bot.declineThread(threadId);
+await bot.muteThread(threadId);
+await bot.unmuteThread(threadId);
+await bot.archiveThread(threadId);
+await bot.unarchiveThread(threadId);
+await bot.deleteThread(threadId);
+await bot.leaveThread(threadId);
+await bot.addUsersToThread(threadId, ['user_id']);
+await bot.removeUserFromThread(threadId, 'user_id');
+await bot.updateThreadTitle(threadId, 'New Title');
 ```
 
-### User Methods
+### User & Social
 
 ```javascript
-// Get user info by ID
-const user = await bot.getUserInfo(userId);
+const user  = await bot.getUserInfo(userId);
+const user2 = await bot.getUserInfoByUsername('username');
+const found = await bot.searchUsers('query');
 
-// Get user info by username
-const user = await bot.getUserInfoByUsername('username');
+const status   = await bot.getFriendshipStatus(userId);
+const statuses = await bot.getFriendshipStatuses(['id1', 'id2']);
 
-// Search users
-const results = await bot.searchUsers('query');
-
-// Get followers (with limit)
-const followers = await bot.getFollowers(userId, 50);
-
-// Get following (with limit)
-const following = await bot.getFollowing(userId, 50);
-```
-
-### Feed & Posts
-
-```javascript
-// Get timeline feed
-const timeline = await bot.getTimelineFeed(20);
-
-// Get user feed
-const userFeed = await bot.getUserFeed(userId, 20);
-
-// Like post
-await bot.likePost(mediaId);
-
-// Unlike post
-await bot.unlikePost(mediaId);
-
-// Comment on post
-await bot.commentPost(mediaId, 'Great post!');
-
-// Get media info
-const mediaInfo = await bot.getMediaInfo(mediaId);
-
-// Delete post
-await bot.deletePost(mediaId);
-```
-
-### Upload Content
-
-```javascript
-// Upload photo to feed
-const result = await bot.uploadPhoto('./photo.jpg', 'My caption #hashtag');
-
-// Upload story
-await bot.uploadStory('./story.jpg');
-```
-
-### Social Actions
-
-```javascript
-// Follow user
 await bot.followUser(userId);
-
-// Unfollow user
 await bot.unfollowUser(userId);
+await bot.blockUser(userId);
+await bot.unblockUser(userId);
+await bot.muteUser(userId);
+const blocked = await bot.getBlockedUsers();
+
+const followers = await bot.getFollowers(userId, 100);
+const following = await bot.getFollowing(userId, 100);
+```
+
+### Feeds & Content
+
+```javascript
+const timeline = await bot.getTimelineFeed(20);
+const feed     = await bot.getUserFeed(userId, 20);
+const hashtag  = await bot.getHashtagFeed('photography', 20);
+const explore  = await bot.getExploreFeed(20);
+const location = await bot.getLocationFeed(locationId, 20);
+const activity = await bot.getActivityFeed();
+const notifs   = await bot.getNotifications();
+const stories  = await bot.getStories(userId);
+const reels    = await bot.getReelsTrayCandidates();
+```
+
+### Posts & Interactions
+
+```javascript
+await bot.likePost(mediaId);
+await bot.unlikePost(mediaId);
+await bot.commentPost(mediaId, 'Great post!');
+await bot.deleteComment(mediaId, commentId);
+await bot.likeComment(mediaId, commentId);
+await bot.unlikeComment(mediaId, commentId);
+const comments = await bot.getComments(mediaId);
+const info     = await bot.getMediaInfo(mediaId);
+await bot.deletePost(mediaId);
+
+const tagged = await bot.getTaggedPosts(userId);
+const saved  = await bot.getSavedPosts();
+await bot.savePost(mediaId);
+await bot.unsavePost(mediaId);
+```
+
+### Publishing
+
+```javascript
+await bot.uploadPhoto('./photo.jpg', 'Caption #hashtag');
+await bot.uploadVideo('./video.mp4', 'Caption');
+await bot.uploadCarousel(['./img1.jpg', './img2.jpg'], 'Carousel caption');
+await bot.uploadStory('./story.jpg');
+await bot.uploadVideoStory('./story.mp4');
+```
+
+### Profile
+
+```javascript
+await bot.editProfile({ biography: 'New bio', website: 'https://example.com' });
+await bot.setProfilePicture('./avatar.jpg');
+await bot.removeProfilePicture();
+await bot.changePassword('oldPassword', 'newPassword');
+```
+
+### Search
+
+```javascript
+const tags      = await bot.searchHashtags('photography');
+const locations = await bot.searchLocations('New York');
+```
+
+### Health & Observability
+
+```javascript
+const status = bot.getStatus();
+// { isLoggedIn, userId, username, isPolling, pollingStats }
+
+const stats = bot.dm.getPollingStats();
+// { startedAt, totalPolls, totalErrors, consecutiveErrors,
+//   circuitOpen, currentInterval, uptime, uptimeFormatted,
+//   seenIdCount, replyHandlerCount, trackedThreads }
+
+await bot.restartPolling({ interval: 5000 });
+```
+
+### Events
+
+```javascript
+bot.onMessage(callback);          // new incoming message
+bot.onPendingRequest(callback);   // new pending DM request
+bot.onError(callback);            // any polling or runtime error
+bot.onLogin(callback);            // successful login
+bot.onRateLimit(callback);        // rate limit hit
+bot.onTyping(callback);           // typing indicator
+bot.onPollingStart(callback);     // polling loop started
+bot.onPollingStop(callback);      // polling loop stopped
+bot.onSessionExpired(callback);   // auth failure detected
+bot.onCircuitOpen(callback);      // circuit breaker opened
+bot.onCircuitClosed(callback);    // circuit breaker recovered
+bot.onShutdown(callback);         // graceful shutdown complete
 ```
 
 ---
 
-## 🎨 Advanced Examples
-
-### Auto-Reply Bot with onReply (Enhanced)
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-// Listen for new messages
-bot.on('message', async (message) => {
-  const { thread_id, text, is_from_me } = message;
-  
-  // Don't reply to yourself
-  if (is_from_me) return;
-  
-  // Auto-reply with onReply callback
-  if (text.toLowerCase().includes('hello')) {
-    await bot.sendMessageWithReply(thread_id, 'Hi! What can I help you with?', async (reply) => {
-      await bot.sendMessage(thread_id, `Got it! You said: "${reply.text}"`);
-    });
-  }
-});
-
-// Start polling for messages every 5 seconds
-await bot.startListening(5000);
-```
-
-### Interactive Menu Bot (onReply Pattern)
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-bot.on('message', async (msg) => {
-  if (msg.is_from_me) return;
-  
-  if (msg.text === '!menu') {
-    await bot.sendMessageWithReply(
-      msg.thread_id,
-      '📋 Menu:\n1. View Products\n2. Support\n3. Pricing\n\nReply with a number:',
-      async (reply) => {
-        const choice = reply.text.trim();
-        if (choice === '1') {
-          await bot.sendMessage(reply.thread_id, '🛍️ Here are our products...');
-        } else if (choice === '2') {
-          await bot.sendMessage(reply.thread_id, '💬 Contact support at...');
-        } else if (choice === '3') {
-          await bot.sendMessage(reply.thread_id, '💰 Our pricing: $10/month');
-        } else {
-          await bot.sendMessage(reply.thread_id, '❌ Invalid choice. Try !menu again');
-        }
-      },
-      { replyTimeout: 60000 } // 1 minute timeout
-    );
-  }
-});
-
-await bot.startListening(5000);
-```
-
-### Media Download Bot
-
-```javascript
-import InstagramChatAPI from 'neokex-ica';
-
-const bot = new InstagramChatAPI();
-await bot.loadCookiesFromFile('./cookies.txt');
-
-bot.on('message', async (msg) => {
-  if (msg.is_from_me) return;
-  
-  // When user sends media, download it
-  if (msg.message.media) {
-    try {
-      const mediaUrls = await bot.getMessageMediaUrl(msg.thread_id, msg.item_id);
-      
-      if (mediaUrls.media.videos && mediaUrls.media.videos.length > 0) {
-        console.log('Video URLs:', mediaUrls.media.videos);
-        
-        // Download the video
-        const downloaded = await bot.downloadMessageMedia(msg.thread_id, msg.item_id);
-        console.log(`Downloaded video to: ${downloaded.path}`);
-        
-        // Forward to another thread
-        await bot.forwardMessage(msg.thread_id, 'another_thread_id', msg.item_id);
-      }
-    } catch (error) {
-      console.error('Media download error:', error.message);
-    }
-  }
-});
-
-await bot.startListening(5000);
-```
-
-### Send Photo/Video from URL
-
-```javascript
-// Send photo from URL
-const photoUrl = 'https://picsum.photos/800/600';
-await bot.sendPhotoFromUrl(threadId, photoUrl);
-
-// Send video from URL (streaming support)
-const videoUrl = 'https://example.com/video.mp4';
-await bot.sendVideoFromUrl(threadId, videoUrl);
-```
-
-### Bulk DM Sender
-
-```javascript
-const users = ['user1_id', 'user2_id', 'user3_id'];
-const message = 'Hey! Check out our new product!';
-
-for (const userId of users) {
-  try {
-    await bot.dm.sendMessageToUser(userId, message);
-    console.log(`✅ Sent to ${userId}`);
-    
-    // Delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  } catch (error) {
-    console.error(`❌ Failed to send to ${userId}:`, error.message);
-  }
-}
-```
-
-### Get and Display Inbox
-
-```javascript
-const inbox = await bot.getInbox();
-
-inbox.threads.forEach((thread, index) => {
-  const username = thread.users?.[0]?.username || 'Unknown';
-  const lastMessage = thread.last_permanent_item?.text || '(media)';
-  console.log(`${index + 1}. @${username}: ${lastMessage}`);
-});
-```
-
----
-
-## 🔧 Configuration
-
-### Constructor Options
+## Configuration
 
 ```javascript
 const bot = new InstagramChatAPI({
-  showBanner: false  // Hide the startup banner (default: true)
+  showBanner: false  // suppress startup banner (default: true)
 });
 ```
 
 ---
 
-## ⚡ Performance Tips
+## Performance Tips
 
-1. **Use Cookie Authentication** - Much faster and more reliable than username/password
-2. **Reuse Sessions** - Save cookies and reuse them to avoid logging in repeatedly
-3. **Rate Limiting** - Add delays between requests to avoid Instagram's rate limits
-4. **Error Handling** - Always wrap API calls in try-catch blocks
-
----
-
-## 🛡️ Security Best Practices
-
-1. **Never commit credentials** - Use environment variables or config files (added to .gitignore)
-2. **Rotate accounts** - Don't use your main Instagram account
-3. **Respect rate limits** - Instagram will ban accounts that spam
-4. **Use proxies** - For production bots, consider using proxies
-5. **Handle 2FA** - Be prepared for two-factor authentication challenges
+1. **Cookie authentication** — faster and more reliable than username/password
+2. **Reuse sessions** — save cookies and reload them to skip login overhead
+3. **Respect rate limits** — add delays between bulk operations
+4. **Let the circuit breaker work** — don't bypass it; it protects your account
+5. **Use `process.exit(1)` on `session:expired`** — let a process manager (PM2, systemd) restart cleanly
 
 ---
 
-## 📋 Available Methods (80+)
+## Security Best Practices
 
-<details>
-<parameter name="summary">Click to expand full method list
-
----
-
-## 🚀 What's New in v2.1
-
-- ✅ **onReply Callbacks** - Advanced reply handling like ws3-fca/fca-unofficial
-- ✅ **Reply to Messages** - Send messages as replies to other messages
-- ✅ **Message Editing** - Edit sent messages
-- ✅ **Media Download** - Extract and download video/image URLs from DMs
-- ✅ **GIF Support** - Send GIFs and animated media
-- ✅ **Video Streaming** - Send videos from URLs with streaming support
-- ✅ **Message Forwarding** - Forward media between threads
-- ✅ **Fixed Polling** - Messages now show in real-time without needing to refresh
-- ✅ **Better Event Tracking** - No duplicate message emissions
-- ✅ **Complete Method Implementations** - All stub methods now fully functional
-
-## ❌ Known Limitations
-
-Due to Instagram API restrictions:
-- ⚠️ **Voice notes** - Limited support due to Instagram API restrictions
-- ✅ **Photos work perfectly** - Including from URLs with auto-processing
-- ✅ **Videos supported** - Send from files and URLs with streaming support
-- ✅ **GIFs supported** - Full Giphy integration
+1. Never commit credentials — use environment variables or `.env` files
+2. Don't use your main Instagram account for testing
+3. Respect rate limits — Instagram bans accounts that spam
+4. Consider proxies for production bots running at high volume
+5. Be prepared for two-factor authentication challenges on fresh logins
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Login Failed / Challenge Required
-- Use cookie authentication instead
-- Your account may require 2FA or CAPTCHA verification
-- Try logging in from the Instagram app first
-
-### "Checkpoint Required" Error
-- Instagram detected automated behavior
-- Complete the checkpoint in the Instagram app or website
-- Wait 24-48 hours before trying again
+- Use cookie authentication instead of username/password
+- Complete any checkpoint in the Instagram app before retrying
+- Wait 24–48 hours if your account is temporarily restricted
 
 ### Photos Not Sending
-- Check image format (JPG/PNG supported)
-- Images are auto-resized to 1080px max
-- Large files are auto-compressed
+- Supported formats: JPG, PNG
+- Images are auto-resized to 1080px max width
+- Large files are auto-compressed using Sharp
 
 ### Rate Limiting
-- Add delays between requests (3-5 seconds recommended)
-- Don't send too many messages in a short time
-- Instagram limits vary by account age and activity
+- Add 3–5 second delays between bulk requests
+- The circuit breaker will automatically pause polling on repeated 429 errors
+- `ratelimit` errors use a 10s–120s backoff automatically
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) file for details
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-## ⭐ Support
+## Links
 
-If you find this library helpful, please give it a star on GitHub!
-
----
-
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/NeoKEX/neokex-ica)
-- [npm Package](https://www.npmjs.com/package/neokex-ica)
-- [Report Issues](https://github.com/NeoKEX/neokex-ica/issues)
+- [GitHub Repository](https://github.com/NeoKEX/ica-neokex)
+- [npm Package](https://www.npmjs.com/package/ica-neokex)
+- [Report Issues](https://github.com/NeoKEX/ica-neokex/issues)
+- [Examples](./EXAMPLES.md)

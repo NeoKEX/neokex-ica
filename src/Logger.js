@@ -1,5 +1,5 @@
 class Logger {
-  constructor(prefix = 'neokex-ica') {
+  constructor(prefix = 'ica-neokex') {
     this.prefix = prefix;
     this.colors = {
       reset: '\x1b[0m',
