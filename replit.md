@@ -58,20 +58,13 @@ Preferred communication style: Simple, everyday language.
    - **Banner** (`src/Banner.js`) — CLI branding display
    - **Utils** (`src/utils.js`) — `withRetry`, `withTimeout`, `exponentialBackoff`, `classifyError`, `formatUptime`, `sleep`
 
-**TypeScript modules (advanced/composition usage, compiled alongside JS)**
+**Auxiliary JS modules (compiled alongside primary JS, not imported by main files)**
 
-Located in `src/api/`, `src/core/`, `src/polling/`, `src/utils/`, `src/types/`:
-- `src/core/client.ts` — `InstagramCore`
-- `src/polling/engine.ts` — `PollingEngine`
-- `src/api/messaging.ts` — `MessagingAPI`
-- `src/api/media.ts` — `MediaAPI`
-- `src/api/threads.ts` — `ThreadsAPI`
-- `src/api/users.ts` — `UsersAPI`
-- `src/api/feeds.ts` — `FeedsAPI`
-- `src/api/posts.ts` — `PostsAPI`
-- `src/api/stories.ts` — `StoriesAPI`
-- `src/api/profile.ts` — `ProfileAPI`
-- `src/api/search.ts` — `SearchAPI`
+Located in `src/api/`, `src/core/`, `src/polling/`, `src/types/`:
+- `src/core/client.js`, `src/core/cookies.js`
+- `src/polling/engine.js`
+- `src/api/` — feeds, media, messaging, posts, profile, search, stories, threads, users, index
+- `src/types/` — events, message, options, thread, user, index
 
 ### Build System
 
